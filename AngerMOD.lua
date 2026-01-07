@@ -1,4 +1,4 @@
--- [[ ⛧ AngerPC ⛧ V111 LOGO CONTROL ]] --
+-- [[ ⛧ AngerPC ⛧ V112 FRIENDLY AI BOT ]] --
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -35,7 +35,7 @@ local CurrentThemeIndex = 1
 
 -- [[ 1. GUI SETUP ]] --
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V111"
+ScreenGui.Name = "AngerGUI_V112"
 if game.CoreGui:FindFirstChild("RobloxGui") then
     ScreenGui.Parent = game.CoreGui 
 else
@@ -94,7 +94,7 @@ local btnTabAI = MakeTab("AI CHAT")
 local btnTabUI = MakeTab("UI EDIT")
 
 -- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V111"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
+local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V112 AI"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
 
 -- // PAGES // --
 local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
@@ -128,9 +128,17 @@ AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
 AIToggleBtn.TextColor3 = Color3.new(1, 1, 1)
 style(AIToggleBtn)
 
+local FriendBtn = Instance.new("TextButton", PageAI)
+FriendBtn.Size = UDim2.new(1, 0, 0, 40)
+FriendBtn.Position = UDim2.new(0, 0, 0.24, 0)
+FriendBtn.Text = "FRIEND BOT (FOLLOW): OFF"
+FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
+FriendBtn.TextColor3 = Color3.new(1, 1, 1)
+style(FriendBtn)
+
 local AIStatus = Instance.new("TextLabel", PageAI)
 AIStatus.Size = UDim2.new(1, 0, 0, 30)
-AIStatus.Position = UDim2.new(0, 0, 0.25, 0)
+AIStatus.Position = UDim2.new(0, 0, 0.38, 0)
 AIStatus.BackgroundTransparency = 1
 AIStatus.Text = "STATUS: WAITING..."
 AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
@@ -150,11 +158,11 @@ local btnDn = Instance.new("TextButton", FlyGui); btnDn.Size=UDim2.new(1,0,0,60)
 
 -- // LOGIN FRAME // --
 local LFrame = Instance.new("Frame", ScreenGui); LFrame.Size=UDim2.new(0,300,0,150); LFrame.Position=UDim2.new(0.5,-150,0.5,-75); LFrame.BackgroundColor3=Color3.fromRGB(12,12,12); style(LFrame,8,2)
-local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V111"; style(LI)
+local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V112"; style(LI)
 local LB = Instance.new("TextButton", LFrame); LB.Size=UDim2.new(0.5,0,0,40); LB.Position=UDim2.new(0.25,0,0.6,0); LB.BackgroundColor3=Color3.fromRGB(25,25,25); LB.Text="LOGIN"; LB.TextColor3=Color3.new(1,1,1); style(LB)
 
 -- [[ 2. LOGIC ]] --
-local States = {AI = false, Watermark = true} -- ВКЛЮЧЕНО ПО УМОЛЧАНИЮ
+local States = {AI = false, Watermark = true, FriendBot = false} 
 local valSmooth, valHitbox, valFlySpeed, valSpeed, valBypassSpeed, valJumpPower, valRipple, valGhostRate = 0.1, 5, 5, 50, 0.11, 100, 15, 0.05
 local up, down = false, false
 
@@ -185,7 +193,6 @@ local function addOption(name, key, useInput, defaultInputVal, inputCallback)
     local btnSize = useInput and 0.5 or 0.75
     local b = Instance.new("TextButton", f); b.Size = UDim2.new(btnSize, -5, 1, 0); b.Text = name; b.BackgroundColor3 = Color3.fromRGB(20, 20, 20); b.TextColor3 = Color3.new(1,1,1); style(b)
     
-    -- Синхронизация цвета кнопки при старте
     if States[key] then b.BackgroundColor3 = Color3.fromRGB(40, 40, 40) end
 
     local hk = makeBind(name, function() States[key] = not States[key]; if key == "Fly" then FlyGui.Visible = States.Fly end end)
@@ -199,7 +206,7 @@ local function addOption(name, key, useInput, defaultInputVal, inputCallback)
 end
 
 -- [ OPTIONS ] --
-addOption("SHOW LOGO", "Watermark", false) -- NEW OPTION
+addOption("SHOW LOGO", "Watermark", false) 
 addOption("HUMAN AIM", "Aim", true, valSmooth, function(v) valSmooth = math.clamp(v, 0.01, 1) end)
 addOption("SPEED BYPASS", "SpdBypass", true, valBypassSpeed, function(v) valBypassSpeed = v end)
 addOption("UNLOCK CAM", "UnlockAll", false)
@@ -232,7 +239,7 @@ UnlockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local ConfigName = "AngerConfig_V111.json"
+local ConfigName = "AngerConfig_V112.json"
 SaveBtn.MouseButton1Click:Connect(function()
     local data = {}
     for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
@@ -251,6 +258,12 @@ AIToggleBtn.MouseButton1Click:Connect(function()
     States.AI = not States.AI
     AIToggleBtn.Text = States.AI and "AI AUTOREPLY: ON" or "AI AUTOREPLY: OFF"
     AIToggleBtn.BackgroundColor3 = States.AI and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
+end)
+
+FriendBtn.MouseButton1Click:Connect(function()
+    States.FriendBot = not States.FriendBot
+    FriendBtn.Text = States.FriendBot and "FRIEND BOT (FOLLOW): ON" or "FRIEND BOT (FOLLOW): OFF"
+    FriendBtn.BackgroundColor3 = States.FriendBot and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
 end)
 
 local function SendChat(msg)
@@ -276,7 +289,7 @@ local function ProcessAI(msg, senderName)
             Headers = {["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. apiKey},
             Body = HttpService:JSONEncode({
                 model = "gpt-4o-mini", 
-                messages = {{role = "system", content = "You are a Roblox player named AngerPC. Reply short and cool."}, {role = "user", content = senderName .. " said: " .. msg}},
+                messages = {{role = "system", content = "You are a friendly Roblox bot named AngerPC. You follow players and help them. Be funny and kind."}, {role = "user", content = senderName .. " said: " .. msg}},
                 max_tokens = 60
             })
         })
@@ -340,6 +353,22 @@ local function GetClosestTarget()
     return t
 end
 
+-- HELPER FOR FRIEND BOT
+local function GetClosestPlayer()
+    local target = nil
+    local dist = math.huge
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= Player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (v.Character.HumanoidRootPart.Position - Player.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then
+                dist = d
+                target = v.Character.HumanoidRootPart
+            end
+        end
+    end
+    return target
+end
+
 Player.CharacterAdded:Connect(function(char)
     DeathScreen.Enabled = false
     char:WaitForChild("Humanoid").Died:Connect(function() DeathScreen.Enabled = true end)
@@ -365,7 +394,6 @@ RunService.RenderStepped:Connect(function()
         else table.remove(RGB_Objects, i) end 
     end
     
-    -- CONTROL WATERMARK VISIBILITY
     local wm = ScreenGui.Parent:FindFirstChild("AngerWatermark")
     if wm then wm.Enabled = States.Watermark end
 
@@ -406,6 +434,17 @@ RunService.RenderStepped:Connect(function()
     
     if States.Spd and hum.MoveDirection.Magnitude > 0 then root.CFrame += (hum.MoveDirection * (0.5 * valSpeed)) end
     if States.Jump then hum.UseJumpPower = true; hum.JumpPower = valJumpPower else hum.JumpPower = 50 end
+    
+    -- FRIEND BOT LOGIC (ХВОСТИК)
+    if States.FriendBot then
+        local targetRoot = GetClosestPlayer()
+        if targetRoot then
+            local distance = (targetRoot.Position - root.Position).Magnitude
+            if distance > 6 then hum:MoveTo(targetRoot.Position) else hum:Move(Vector3.new(0,0,0)) end
+            local targetHum = targetRoot.Parent:FindFirstChild("Humanoid")
+            if targetHum and targetHum:GetState() == Enum.HumanoidStateType.Jumping then hum.Jump = true end
+        end
+    end
 
     for _, v in pairs(game.Players:GetPlayers()) do if v ~= Player and v.Character and v.Character:FindFirstChild("Head") then local head = v.Character.Head; head.Size = States.Hitbox and Vector3.new(valHitbox, valHitbox, valHitbox) or Vector3.new(1,1,1); head.Transparency = States.Hitbox and 0.7 or 0; head.CanCollide = false; if States.Hitbox then head.Color = activeColor; head.Material = Enum.Material.Neon end end end
 end)
