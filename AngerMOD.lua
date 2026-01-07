@@ -1,4 +1,4 @@
--- [[ ⛧ AngerPC ⛧ V109 AI REVOLUTION ]] --
+-- [[ ⛧ AngerPC ⛧ V110 SWITCHABLE ]] --
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -35,7 +35,7 @@ local CurrentThemeIndex = 1
 
 -- [[ 1. GUI SETUP ]] --
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V109"
+ScreenGui.Name = "AngerGUI_V110"
 if game.CoreGui:FindFirstChild("RobloxGui") then
     ScreenGui.Parent = game.CoreGui 
 else
@@ -90,11 +90,11 @@ local function MakeTab(text)
 end
 local btnTabMain = MakeTab("MAIN")
 local btnTabInfo = MakeTab("INFO")
-local btnTabAI = MakeTab("AI CHAT") -- NEW TAB
+local btnTabAI = MakeTab("AI CHAT") 
 local btnTabUI = MakeTab("UI EDIT")
 
 -- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V109 AI"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
+local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V110"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
 
 -- // PAGES // --
 local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
@@ -150,11 +150,11 @@ local btnDn = Instance.new("TextButton", FlyGui); btnDn.Size=UDim2.new(1,0,0,60)
 
 -- // LOGIN FRAME // --
 local LFrame = Instance.new("Frame", ScreenGui); LFrame.Size=UDim2.new(0,300,0,150); LFrame.Position=UDim2.new(0.5,-150,0.5,-75); LFrame.BackgroundColor3=Color3.fromRGB(12,12,12); style(LFrame,8,2)
-local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V109"; style(LI)
+local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V110"; style(LI)
 local LB = Instance.new("TextButton", LFrame); LB.Size=UDim2.new(0.5,0,0,40); LB.Position=UDim2.new(0.25,0,0.6,0); LB.BackgroundColor3=Color3.fromRGB(25,25,25); LB.Text="LOGIN"; LB.TextColor3=Color3.new(1,1,1); style(LB)
 
 -- [[ 2. LOGIC ]] --
-local States = {AI = false} -- Added AI state
+local States = {AI = false} 
 local valSmooth, valHitbox, valFlySpeed, valSpeed, valBypassSpeed, valJumpPower, valRipple, valGhostRate = 0.1, 5, 5, 50, 0.11, 100, 15, 0.05
 local up, down = false, false
 
@@ -204,6 +204,7 @@ addOption("FLY BYPASS", "Fly", true, valFlySpeed, function(v) valFlySpeed = v en
 addOption("RAGE SPEED", "Spd", true, valSpeed, function(v) valSpeed = v end)
 addOption("SUPER JUMP", "Jump", true, valJumpPower, function(v) valJumpPower = v end)
 addOption("JUMP RIPPLE", "Circle", true, valRipple, function(v) valRipple = v end)
+addOption("PENTAGRAM MODE", "UsePentagram", false) -- NEW OPTION
 addOption("GHOST TRAIL", "Ghosts", true, valGhostRate, function(v) valGhostRate = math.clamp(v, 0.01, 2) end) 
 addOption("ESP HIGHLIGHT", "Esp", false)
 addOption("SKIN COLOR", "RGB", false) 
@@ -226,6 +227,19 @@ UnlockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+local ConfigName = "AngerConfig_V110.json"
+SaveBtn.MouseButton1Click:Connect(function()
+    local data = {}
+    for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
+    if writefile then writefile(ConfigName, game:GetService("HttpService"):JSONEncode(data)); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG" end
+end)
+task.spawn(function()
+    if isfile and isfile(ConfigName) then
+        local data = game:GetService("HttpService"):JSONDecode(readfile(ConfigName))
+        for _, obj in pairs(Movable_Objects) do if data[obj.Name] then obj.Position = UDim2.new(data[obj.Name].X_S, data[obj.Name].X_O, data[obj.Name].Y_S, data[obj.Name].Y_O) end end
+    end
+end)
+
 -- [[ AI LOGIC ]] --
 local AI_Debounce = false
 AIToggleBtn.MouseButton1Click:Connect(function()
@@ -235,7 +249,6 @@ AIToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 local function SendChat(msg)
-    -- Universal Chat Send (Modern & Legacy)
     if game:GetService("TextChatService").ChatVersion == Enum.ChatVersion.TextChatService then
         game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync(msg)
     else
@@ -251,22 +264,14 @@ local function ProcessAI(msg, senderName)
     local apiKey = AIKeyBox.Text
     if apiKey == "" then AIStatus.Text = "ERROR: NO KEY"; AI_Debounce = false; return end
 
-    local prompt = "You are a cool Roblox player. Reply short and funny to: " .. msg
-    
     local success, response = pcall(function()
         return request({
             Url = "https://api.openai.com/v1/chat/completions",
             Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json",
-                ["Authorization"] = "Bearer " .. apiKey
-            },
+            Headers = {["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. apiKey},
             Body = HttpService:JSONEncode({
-                model = "gpt-4o-mini", -- "GPT-5 Mini" equivalent
-                messages = {
-                    {role = "system", content = "You are a Roblox player named AngerPC. You speak slang, short sentences. Don't be polite."},
-                    {role = "user", content = senderName .. " said: " .. msg}
-                },
+                model = "gpt-4o-mini", 
+                messages = {{role = "system", content = "You are a Roblox player named AngerPC. Reply short and cool."}, {role = "user", content = senderName .. " said: " .. msg}},
                 max_tokens = 60
             })
         })
@@ -274,53 +279,48 @@ local function ProcessAI(msg, senderName)
     
     if success and response.Body then
         local data = HttpService:JSONDecode(response.Body)
-        if data.choices and data.choices[1] then
-            local reply = data.choices[1].message.content
-            SendChat(reply)
-            AIStatus.Text = "STATUS: REPLIED"
-        else
-            AIStatus.Text = "ERROR: API FAIL"
-        end
-    else
-        AIStatus.Text = "ERROR: REQUEST FAIL"
-    end
+        if data.choices and data.choices[1] then SendChat(data.choices[1].message.content); AIStatus.Text = "STATUS: REPLIED" else AIStatus.Text = "ERROR: API FAIL" end
+    else AIStatus.Text = "ERROR: REQUEST FAIL" end
     
-    task.wait(2) -- Cooldown
-    AI_Debounce = false
-    task.wait(1)
-    AIStatus.Text = "STATUS: WAITING..."
+    task.wait(2); AI_Debounce = false; task.wait(1); AIStatus.Text = "STATUS: WAITING..."
 end
 
--- Chat Listener
-for _, p in pairs(Players:GetPlayers()) do
-    p.Chatted:Connect(function(msg)
-        if States.AI and p ~= Player then -- Don't reply to self
-            ProcessAI(msg, p.Name)
-        end
-    end)
-end
-Players.PlayerAdded:Connect(function(p)
-    p.Chatted:Connect(function(msg)
-        if States.AI and p ~= Player then
-            ProcessAI(msg, p.Name)
-        end
-    end)
-end)
+for _, p in pairs(Players:GetPlayers()) do p.Chatted:Connect(function(msg) if States.AI and p ~= Player then ProcessAI(msg, p.Name) end end) end
+Players.PlayerAdded:Connect(function(p) p.Chatted:Connect(function(msg) if States.AI and p ~= Player then ProcessAI(msg, p.Name) end end) end)
 
--- [[ PENTAGRAM RIPPLE ]] --
+-- [[ RIPPLE LOGIC (SWITCHABLE) ]] --
 local function SpawnRipple()
     if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then return end
     local root = Player.Character.HumanoidRootPart
     local ray = workspace:Raycast(root.Position, Vector3.new(0, -10, 0), RaycastParams.new())
     local spawnPos = ray and ray.Position or (root.Position - Vector3.new(0, 2.8, 0))
-    local p = Instance.new("Part", workspace); p.Name = "AngerMagicCircle"; p.Anchored = true; p.CanCollide = false; p.Transparency = 1; p.Size = Vector3.new(1, 0.05, 1); p.CFrame = CFrame.new(spawnPos)
-    local sg = Instance.new("SurfaceGui", p); sg.Face = Enum.NormalId.Top; sg.LightInfluence = 0; sg.AlwaysOnTop = false 
-    local img = Instance.new("ImageLabel", sg); img.Size = UDim2.new(1, 0, 1, 0); img.BackgroundTransparency = 1; img.ImageColor3 = Color3.new(1, 1, 1) 
-    local s, a = pcall(function() return getcustomasset("Anger_Pentagram_Circle1.png") end); if s then img.Image = a else img.Image = "rbxassetid://0" end
-    table.insert(RGB_Objects, {Type = "Image", Instance = img})
-    TweenService:Create(p, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(valRipple, 0.05, valRipple)}):Play()
-    TweenService:Create(img, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
-    Debris:AddItem(p, 1.5)
+    
+    local p = Instance.new("Part", workspace)
+    p.Name = "AngerRipple"
+    p.Anchored = true
+    p.CanCollide = false
+    
+    if States.UsePentagram then
+        -- IMAGE MODE (PENTAGRAM)
+        p.Transparency = 1; p.Size = Vector3.new(1, 0.05, 1); p.CFrame = CFrame.new(spawnPos)
+        local sg = Instance.new("SurfaceGui", p); sg.Face = Enum.NormalId.Top; sg.LightInfluence = 0; sg.AlwaysOnTop = false 
+        local img = Instance.new("ImageLabel", sg); img.Size = UDim2.new(1, 0, 1, 0); img.BackgroundTransparency = 1; img.ImageColor3 = Color3.new(1, 1, 1) 
+        local s, a = pcall(function() return getcustomasset("Anger_Pentagram_Circle1.png") end); if s then img.Image = a else img.Image = "rbxassetid://0" end
+        table.insert(RGB_Objects, {Type = "Image", Instance = img})
+        TweenService:Create(p, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(valRipple, 0.05, valRipple)}):Play()
+        TweenService:Create(img, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play()
+        Debris:AddItem(p, 1.5)
+    else
+        -- CLASSIC MODE (NO IMAGE)
+        p.Shape = Enum.PartType.Cylinder
+        p.Material = Enum.Material.Neon
+        p.Size = Vector3.new(0.1, 1, 1)
+        p.CFrame = CFrame.new(spawnPos) * CFrame.Angles(0, 0, math.rad(90))
+        p.Color = Color3.new(1,1,1) -- Will be updated by RenderLoop
+        table.insert(RGB_Objects, {Type = "Part", Instance = p}) -- NEW TYPE
+        TweenService:Create(p, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0.1, valRipple, valRipple), Transparency = 1}):Play()
+        Debris:AddItem(p, 1)
+    end
 end
 
 local function GetClosestTarget()
@@ -357,6 +357,7 @@ RunService.RenderStepped:Connect(function()
             if obj.Type == "Stroke" then obj.Instance.Color = activeColor 
             elseif obj.Type == "Text" then obj.Instance.TextColor3 = activeColor 
             elseif obj.Type == "Image" then obj.Instance.ImageColor3 = activeColor
+            elseif obj.Type == "Part" then obj.Instance.Color = activeColor -- ADDED SUPPORT FOR CLASSIC RIPPLE
             end 
         else table.remove(RGB_Objects, i) end 
     end
