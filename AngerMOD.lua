@@ -303,7 +303,7 @@ AIToggleBtn.MouseButton1Click:Connect(function()
     States.AI = not States.AI
     AIToggleBtn.Text = States.AI and "AI AUTOREPLY: ON" or "AI AUTOREPLY: OFF"
     AIToggleBtn.BackgroundColor3 = States.AI and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
-    if States.AI then SendChat("AngerAI: Модуль чата активен. Спрашивай что угодно!") end
+    if States.AI then SendChat("AngerMOD: Модуль чата активен. Спрашивай что угодно!") end
 end)
 FriendBtn.MouseButton1Click:Connect(function() 
     States.FriendBot = not States.FriendBot
