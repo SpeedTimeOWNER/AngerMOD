@@ -1,4 +1,4 @@
--- [[ ⛧ AngerPC ⛧ V113 SMART BOT & COMMANDS ]] --
+-- [[ ⛧ AngerPC ⛧ V114 MACRO RECORDER ]] --
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,7 +12,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local Lighting = game:GetService("Lighting")
 local Stats = game:GetService("Stats")
 local HttpService = game:GetService("HttpService")
-local PathfindingService = game:GetService("PathfindingService") -- ДОБАВИЛ СЕРВИС ПУТЕЙ
+local PathfindingService = game:GetService("PathfindingService")
 local Player = Players.LocalPlayer
 
 -- [[ SESSION INFO ]] --
@@ -31,7 +31,7 @@ local CurrentThemeIndex = 1
 
 -- [[ 1. GUI SETUP ]] --
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V113"
+ScreenGui.Name = "AngerGUI_V114"
 if game.CoreGui:FindFirstChild("RobloxGui") then ScreenGui.Parent = game.CoreGui else ScreenGui.Parent = Player:WaitForChild("PlayerGui") end
 
 -- DEATH SCREEN
@@ -42,6 +42,7 @@ local DeathLabel = Instance.new("TextLabel", DeathScreen); DeathLabel.Size = UDi
 -- LISTS
 local RGB_Objects = {} 
 local Movable_Objects = {} 
+local RecordedPath = {} -- TABLA ZAPISI
 
 local function style(obj, radius, thickness)
     local uiC = Instance.new("UICorner", obj); uiC.CornerRadius = UDim.new(0, radius or 6)
@@ -51,7 +52,7 @@ local function style(obj, radius, thickness)
 end
 
 -- // MAIN MENU // --
-local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 420, 0, 500); Main.Position = UDim2.new(0.1, 0, 0.2, 0); Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10); Main.Visible = false; Main.Active = true; Main.Draggable = true; style(Main, 8, 2); table.insert(Movable_Objects, Main)
+local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 420, 0, 550); Main.Position = UDim2.new(0.1, 0, 0.2, 0); Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10); Main.Visible = false; Main.Active = true; Main.Draggable = true; style(Main, 8, 2); table.insert(Movable_Objects, Main)
 
 -- TABS
 local TabFrame = Instance.new("Frame", Main); TabFrame.Size = UDim2.new(1, -20, 0, 30); TabFrame.Position = UDim2.new(0, 10, 0, 50); TabFrame.BackgroundTransparency = 1
@@ -61,10 +62,10 @@ local function MakeTab(text)
     local b = Instance.new("TextButton", TabFrame); b.Size=UDim2.new(0.23,0,1,0); b.BackgroundColor3=Color3.fromRGB(20,20,20); b.Text=text; b.TextColor3=Color3.new(1,1,1); b.Font=Enum.Font.SciFi; style(b)
     return b
 end
-local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI CHAT"); local btnTabUI = MakeTab("UI EDIT")
+local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI/MACRO"); local btnTabUI = MakeTab("UI EDIT")
 
 -- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V113 SMART"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
+local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V114 MACRO"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
 
 -- // PAGES // --
 local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
@@ -80,11 +81,17 @@ btnTabUI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.V
 -- // INFO PAGE // --
 local InfoLabel = Instance.new("TextLabel", PageInfo); InfoLabel.Size=UDim2.new(1,0,1,0); InfoLabel.BackgroundTransparency=1; InfoLabel.TextXAlignment=Enum.TextXAlignment.Left; InfoLabel.TextYAlignment=Enum.TextYAlignment.Top; InfoLabel.TextColor3=Color3.fromRGB(0,255,0); InfoLabel.Font=Enum.Font.Code; InfoLabel.TextSize=14
 
--- // AI PAGE SETUP // --
-local AIKeyBox = Instance.new("TextBox", PageAI); AIKeyBox.Size = UDim2.new(1, 0, 0, 40); AIKeyBox.PlaceholderText = "PASTE OPENAI API KEY (sk-...)"; AIKeyBox.Text = ""; AIKeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); AIKeyBox.TextColor3 = Color3.new(1, 1, 1); AIKeyBox.ClearTextOnFocus = false; style(AIKeyBox)
-local AIToggleBtn = Instance.new("TextButton", PageAI); AIToggleBtn.Size = UDim2.new(1, 0, 0, 40); AIToggleBtn.Position = UDim2.new(0, 0, 0.12, 0); AIToggleBtn.Text = "AI AUTOREPLY: OFF"; AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AIToggleBtn.TextColor3 = Color3.new(1, 1, 1); style(AIToggleBtn)
-local FriendBtn = Instance.new("TextButton", PageAI); FriendBtn.Size = UDim2.new(1, 0, 0, 40); FriendBtn.Position = UDim2.new(0, 0, 0.24, 0); FriendBtn.Text = "FRIEND BOT: OFF"; FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FriendBtn.TextColor3 = Color3.new(1, 1, 1); style(FriendBtn)
-local AIStatus = Instance.new("TextLabel", PageAI); AIStatus.Size = UDim2.new(1, 0, 0, 30); AIStatus.Position = UDim2.new(0, 0, 0.38, 0); AIStatus.BackgroundTransparency = 1; AIStatus.Text = "STATUS: WAITING..."; AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150); style(AIStatus, 0, 0)
+-- // AI & MACRO PAGE SETUP // --
+local AIKeyBox = Instance.new("TextBox", PageAI); AIKeyBox.Size = UDim2.new(1, 0, 0, 40); AIKeyBox.Position = UDim2.new(0,0,0,0); AIKeyBox.PlaceholderText = "OPENAI KEY (sk-...)"; AIKeyBox.Text = ""; AIKeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); AIKeyBox.TextColor3 = Color3.new(1, 1, 1); style(AIKeyBox)
+local AIToggleBtn = Instance.new("TextButton", PageAI); AIToggleBtn.Size = UDim2.new(1, 0, 0, 40); AIToggleBtn.Position = UDim2.new(0, 0, 0.1, 0); AIToggleBtn.Text = "AI AUTOREPLY: OFF"; AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AIToggleBtn.TextColor3 = Color3.new(1, 1, 1); style(AIToggleBtn)
+local FriendBtn = Instance.new("TextButton", PageAI); FriendBtn.Size = UDim2.new(1, 0, 0, 40); FriendBtn.Position = UDim2.new(0, 0, 0.2, 0); FriendBtn.Text = "FRIEND BOT: OFF"; FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FriendBtn.TextColor3 = Color3.new(1, 1, 1); style(FriendBtn)
+
+-- MACRO SECTION
+local MacroLabel = Instance.new("TextLabel", PageAI); MacroLabel.Size = UDim2.new(1,0,0,30); MacroLabel.Position = UDim2.new(0,0,0.32,0); MacroLabel.Text = "--- MACRO RECORDER ---"; MacroLabel.TextColor3 = Color3.new(1,1,1); MacroLabel.BackgroundTransparency = 1; MacroLabel.Font = Enum.Font.SciFi
+local RecBtn = Instance.new("TextButton", PageAI); RecBtn.Size = UDim2.new(0.48, 0, 0, 40); RecBtn.Position = UDim2.new(0, 0, 0.4, 0); RecBtn.Text = "RECORD"; RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); RecBtn.TextColor3 = Color3.new(1, 1, 1); style(RecBtn)
+local PlayBtn = Instance.new("TextButton", PageAI); PlayBtn.Size = UDim2.new(0.48, 0, 0, 40); PlayBtn.Position = UDim2.new(0.52, 0, 0.4, 0); PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); PlayBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayBtn)
+local LoopBtn = Instance.new("TextButton", PageAI); LoopBtn.Size = UDim2.new(1, 0, 0, 40); LoopBtn.Position = UDim2.new(0, 0, 0.5, 0); LoopBtn.Text = "LOOP PLAYBACK: OFF"; LoopBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); LoopBtn.TextColor3 = Color3.new(1, 1, 1); style(LoopBtn)
+local AIStatus = Instance.new("TextLabel", PageAI); AIStatus.Size = UDim2.new(1, 0, 0, 30); AIStatus.Position = UDim2.new(0, 0, 0.62, 0); AIStatus.BackgroundTransparency = 1; AIStatus.Text = "STATUS: IDLE"; AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150); style(AIStatus, 0, 0)
 
 -- // UI EDIT PAGE // --
 local UnlockBtn = Instance.new("TextButton", PageUI); UnlockBtn.Size=UDim2.new(1,0,0,50); UnlockBtn.BackgroundColor3=Color3.fromRGB(30,10,10); UnlockBtn.Text="UNLOCK MOVING: OFF"; UnlockBtn.TextColor3=Color3.new(1,1,1); style(UnlockBtn)
@@ -100,11 +107,14 @@ local btnDn = Instance.new("TextButton", FlyGui); btnDn.Size=UDim2.new(1,0,0,60)
 
 -- // LOGIN FRAME // --
 local LFrame = Instance.new("Frame", ScreenGui); LFrame.Size=UDim2.new(0,300,0,150); LFrame.Position=UDim2.new(0.5,-150,0.5,-75); LFrame.BackgroundColor3=Color3.fromRGB(12,12,12); style(LFrame,8,2)
-local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V113"; style(LI)
+local LI = Instance.new("TextBox", LFrame); LI.Size=UDim2.new(0.8,0,0,40); LI.Position=UDim2.new(0.1,0,0.2,0); LI.BackgroundColor3=Color3.fromRGB(20,20,20); LI.TextColor3=Color3.new(1,1,1); LI.Text=""; LI.PlaceholderText="AngerPC V114"; style(LI)
 local LB = Instance.new("TextButton", LFrame); LB.Size=UDim2.new(0.5,0,0,40); LB.Position=UDim2.new(0.25,0,0.6,0); LB.BackgroundColor3=Color3.fromRGB(25,25,25); LB.Text="LOGIN"; LB.TextColor3=Color3.new(1,1,1); style(LB)
 
 -- [[ 2. LOGIC ]] --
-local States = {AI = false, Watermark = true, FriendBot = false, IsFollowing = true} -- IsFollowing - для команд
+local States = {
+    AI = false, Watermark = true, FriendBot = false, IsFollowing = true,
+    IsRecording = false, IsPlaying = false, LoopPlay = false
+} 
 local valSmooth, valHitbox, valFlySpeed, valSpeed, valBypassSpeed, valJumpPower, valRipple, valGhostRate = 0.1, 5, 5, 50, 0.11, 100, 15, 0.05
 local up, down = false, false
 
@@ -161,12 +171,82 @@ UnlockBtn.MouseButton1Click:Connect(function()
     isUnlocked = not isUnlocked; UnlockBtn.Text = isUnlocked and "UNLOCK MOVING: ON" or "UNLOCK MOVING: OFF"; UnlockBtn.BackgroundColor3 = isUnlocked and Color3.fromRGB(10,50,10) or Color3.fromRGB(30,10,10)
     for _, obj in pairs(Movable_Objects) do obj.Active = isUnlocked; obj.Draggable = isUnlocked end
 end)
-local ConfigName = "AngerConfig_V113.json"
+local ConfigName = "AngerConfig_V114.json"
 SaveBtn.MouseButton1Click:Connect(function()
     local data = {}; for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
     if writefile then writefile(ConfigName, game:GetService("HttpService"):JSONEncode(data)); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG" end
 end)
 task.spawn(function() if isfile and isfile(ConfigName) then local data = game:GetService("HttpService"):JSONDecode(readfile(ConfigName)); for _, obj in pairs(Movable_Objects) do if data[obj.Name] then obj.Position = UDim2.new(data[obj.Name].X_S, data[obj.Name].X_O, data[obj.Name].Y_S, data[obj.Name].Y_O) end end end end)
+
+-- [[ MACRO LOGIC ]] --
+RecBtn.MouseButton1Click:Connect(function()
+    States.IsRecording = not States.IsRecording
+    if States.IsRecording then
+        States.IsPlaying = false -- Stop playing if recording
+        PlayBtn.Text = "PLAY"
+        RecordedPath = {} -- Clear old path
+        RecBtn.Text = "STOP REC"
+        RecBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        AIStatus.Text = "STATUS: RECORDING..."
+    else
+        RecBtn.Text = "RECORD"
+        RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10)
+        AIStatus.Text = "STATUS: SAVED " .. #RecordedPath .. " FRAMES"
+    end
+end)
+
+local function StartPlayback()
+    if #RecordedPath == 0 then AIStatus.Text = "ERROR: NO RECORDING"; States.IsPlaying = false; PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); return end
+    
+    task.spawn(function()
+        while States.IsPlaying do
+            AIStatus.Text = "STATUS: PLAYING..."
+            for i, frame in ipairs(RecordedPath) do
+                if not States.IsPlaying then break end
+                
+                local char = Player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+                    char.HumanoidRootPart.CFrame = frame.CF -- Hard set for exact replay
+                    char.Humanoid.Jump = frame.Jump
+                    char.Humanoid.Sit = frame.Sit
+                    -- Restore camera slightly makes it feel like cinematic
+                    -- Camera.CFrame = frame.CamCF 
+                end
+                RunService.Heartbeat:Wait()
+            end
+            
+            if not States.LoopPlay then 
+                States.IsPlaying = false 
+                PlayBtn.Text = "PLAY"
+                PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
+                AIStatus.Text = "STATUS: FINISHED"
+                break 
+            end
+        end
+    end)
+end
+
+PlayBtn.MouseButton1Click:Connect(function()
+    States.IsPlaying = not States.IsPlaying
+    if States.IsPlaying then
+        States.IsRecording = false -- Stop rec if playing
+        RecBtn.Text = "RECORD"
+        PlayBtn.Text = "STOP PLAY"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        StartPlayback()
+    else
+        PlayBtn.Text = "PLAY"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
+        AIStatus.Text = "STATUS: STOPPED"
+    end
+end)
+
+LoopBtn.MouseButton1Click:Connect(function()
+    States.LoopPlay = not States.LoopPlay
+    LoopBtn.Text = States.LoopPlay and "LOOP PLAYBACK: ON" or "LOOP PLAYBACK: OFF"
+    LoopBtn.BackgroundColor3 = States.LoopPlay and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 30, 30)
+end)
+
 
 -- [[ AI & CHAT LOGIC ]] --
 local AI_Debounce = false
@@ -189,31 +269,21 @@ end
 local function ExecuteCommand(msg)
     local m = string.lower(msg)
     if string.find(m, "сядь") or string.find(m, "сидеть") then
-        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Sit = true end
-        return true
+        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Sit = true end; return true
     elseif string.find(m, "встань") then
-        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Sit = false; Player.Character.Humanoid.Jump = true end
-        return true
-    elseif string.find(m, "стой") or string.find(m, "стоп") then
-        States.IsFollowing = false
-        return true
-    elseif string.find(m, "ко мне") or string.find(m, "за мной") then
-        States.IsFollowing = true
-        return true
+        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Sit = false; Player.Character.Humanoid.Jump = true end; return true
+    elseif string.find(m, "стой") or string.find(m, "стоп") then States.IsFollowing = false; return true
+    elseif string.find(m, "ко мне") or string.find(m, "за мной") then States.IsFollowing = true; return true
     elseif string.find(m, "прыгни") then
-        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Jump = true end
-        return true
+        if Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid.Jump = true end; return true
     end
     return false
 end
 
 local function ProcessAI(msg, senderName)
     if AI_Debounce then return end
-    
-    -- СНАЧАЛА ПРОВЕРЯЕМ КОМАНДЫ
-    if States.FriendBot and ExecuteCommand(msg) then return end -- Если это команда, не шлем в GPT
-
-    if not States.AI then return end -- Если AI чат выключен
+    if States.FriendBot and ExecuteCommand(msg) then return end 
+    if not States.AI then return end
     
     AI_Debounce = true; AIStatus.Text = "STATUS: THINKING..."
     local apiKey = AIKeyBox.Text
@@ -226,8 +296,8 @@ local function ProcessAI(msg, senderName)
             Headers = {["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. apiKey},
             Body = HttpService:JSONEncode({
                 model = "gpt-4o-mini", 
-                messages = {{role = "system", content = "You are a friendly Roblox bot named AngerPC. Reply short and cool."}, {role = "user", content = senderName .. " said: " .. msg}},
-                max_tokens = 60
+                messages = {{role = "system", content = "You are a friendly Roblox bot named AngerMOD. Reply short and cool."}, {role = "user", content = senderName .. " said: " .. msg}},
+                max_tokens = 2048
             })
         })
     end)
@@ -239,7 +309,6 @@ local function ProcessAI(msg, senderName)
     task.wait(2); AI_Debounce = false; task.wait(1); AIStatus.Text = "STATUS: WAITING..."
 end
 
--- СЛУШАТЕЛЬ ЧАТА
 for _, p in pairs(Players:GetPlayers()) do 
     p.Chatted:Connect(function(msg) if p ~= Player then ProcessAI(msg, p.Name) end end) 
 end
@@ -247,7 +316,7 @@ Players.PlayerAdded:Connect(function(p)
     p.Chatted:Connect(function(msg) if p ~= Player then ProcessAI(msg, p.Name) end end) 
 end)
 
--- [[ VISUALS ]] --
+-- [[ VISUALS & HELPERS ]] --
 local function SpawnRipple()
     if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then return end
     local root = Player.Character.HumanoidRootPart
@@ -283,36 +352,20 @@ local function GetClosestPlayer()
     return target
 end
 
--- [[ SMART PATHFINDING (FIX FOR WALLS) ]] --
 local function SmartWalkTo(targetPos)
-    local char = Player.Character
-    if not char then return end
-    local hum = char:FindFirstChild("Humanoid")
-    local root = char:FindFirstChild("HumanoidRootPart")
-    
-    -- Raycast check (вижу ли я цель напрямую?)
+    local char = Player.Character; if not char then return end
+    local hum = char:FindFirstChild("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
     local rayParams = RaycastParams.new(); rayParams.FilterDescendantsInstances = {char}; rayParams.FilterType = Enum.RaycastFilterType.Blacklist
     local direction = (targetPos - root.Position)
     local ray = workspace:Raycast(root.Position, direction, rayParams)
     
     if ray and ray.Instance and ray.Instance.CanCollide then
-        -- ЕСТЬ СТЕНА - ИСПОЛЬЗУЕМ PATHFINDING
-        local path = PathfindingService:CreatePath()
-        path:ComputeAsync(root.Position, targetPos)
+        local path = PathfindingService:CreatePath(); path:ComputeAsync(root.Position, targetPos)
         if path.Status == Enum.PathStatus.Success then
             local waypoints = path:GetWaypoints()
-            -- Идем ко второй точке (первая - это мы сами)
-            if waypoints and waypoints[2] then
-                hum:MoveTo(waypoints[2].Position)
-                if waypoints[2].Action == Enum.PathWaypointAction.Jump then hum.Jump = true end
-            end
-        else
-            hum:MoveTo(targetPos) -- Если путь не найден, пробуем напрямую
-        end
-    else
-        -- НЕТ СТЕНЫ - ИДЕМ НАПРЯМУЮ (ПЛАВНЕЕ)
-        hum:MoveTo(targetPos)
-    end
+            if waypoints and waypoints[2] then hum:MoveTo(waypoints[2].Position); if waypoints[2].Action == Enum.PathWaypointAction.Jump then hum.Jump = true end end
+        else hum:MoveTo(targetPos) end
+    else hum:MoveTo(targetPos) end
 end
 
 Player.CharacterAdded:Connect(function(char) DeathScreen.Enabled = false; char:WaitForChild("Humanoid").Died:Connect(function() DeathScreen.Enabled = true end) end)
@@ -337,6 +390,11 @@ RunService.RenderStepped:Connect(function()
 
     local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     local hum = char:FindFirstChild("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
+    
+    -- RECORDING LOGIC
+    if States.IsRecording then
+        table.insert(RecordedPath, {CF = root.CFrame, Jump = hum.Jump, Sit = hum.Sit})
+    end
 
     if States.UnlockAll then Player.CameraMaxZoomDistance = 100000; Player.CameraMinZoomDistance = 0; Player.CameraMode = Enum.CameraMode.Classic end
     if States.SpdBypass and hum.MoveDirection.Magnitude > 0 then root.CFrame = root.CFrame + (hum.MoveDirection * valBypassSpeed) end
@@ -351,17 +409,11 @@ RunService.RenderStepped:Connect(function()
     if States.Spd and hum.MoveDirection.Magnitude > 0 then root.CFrame += (hum.MoveDirection * (0.5 * valSpeed)) end
     if States.Jump then hum.UseJumpPower = true; hum.JumpPower = valJumpPower else hum.JumpPower = 50 end
 
-    -- FRIEND BOT LOGIC (SMART)
-    if States.FriendBot and States.IsFollowing then
+    if States.FriendBot and States.IsFollowing and not States.IsPlaying then -- Disable Follow if playing Macro
         local targetRoot = GetClosestPlayer()
         if targetRoot then
             local distance = (targetRoot.Position - root.Position).Magnitude
-            if distance > 6 then 
-                -- USE SMART MOVEMENT
-                SmartWalkTo(targetRoot.Position)
-            else 
-                hum:Move(Vector3.new(0,0,0)) 
-            end
+            if distance > 6 then SmartWalkTo(targetRoot.Position) else hum:Move(Vector3.new(0,0,0)) end
             local targetHum = targetRoot.Parent:FindFirstChild("Humanoid")
             if targetHum and targetHum:GetState() == Enum.HumanoidStateType.Jumping then hum.Jump = true end
         end
