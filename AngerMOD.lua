@@ -1,4 +1,4 @@
--- [[ ⛧ AngerPC ⛧ V125 AI-RESTORE + NOTIFS ]] --
+-- [[ ⛧ AngerPC ⛧ V126 REC-FIX ]] --
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -41,7 +41,7 @@ local CurrentThemeIndex = 1
 
 -- [[ 1. GUI SETUP ]] --
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V125"
+ScreenGui.Name = "AngerGUI_V126"
 ScreenGui.ResetOnSpawn = false 
 
 if Player:FindFirstChild("PlayerGui") then
@@ -95,7 +95,6 @@ local function Notify(text)
     l.TextSize = 14
     l.TextXAlignment = Enum.TextXAlignment.Left
     
-    -- Animation
     f.BackgroundTransparency = 1
     l.TextTransparency = 1
     TweenService:Create(f, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}):Play()
@@ -123,7 +122,7 @@ end
 local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI"); local btnTabWorld = MakeTab("WORLD"); local btnTabUI = MakeTab("UI")
 
 -- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V125 (AI + NOTIFS)"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
+local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V126 (REC FIXED)"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
 
 -- // PAGES // --
 local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
@@ -182,11 +181,22 @@ local function EmergencyBrake()
     local char = Player.Character; if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.Velocity = Vector3.new(0,0,0); char.HumanoidRootPart.RotVelocity = Vector3.new(0,0,0) end
 end
 
+-- [[ FIXED REPLAY MOVEMENT ]] --
 local function SmartMove(targetCF)
     local char = Player.Character; if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart"); if not root then return end
-    local car = nil; if char:FindFirstChild("Humanoid") and char.Humanoid.SeatPart then car = char.Humanoid.SeatPart.Parent end
-    if car and car:IsA("Model") then local mainPart = car.PrimaryPart or char.Humanoid.SeatPart; mainPart.Velocity = Vector3.new(0,0,0); mainPart.CFrame = targetCF else root.CFrame = targetCF end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChild("Humanoid")
+    if not root or not hum then return end
+    
+    local car = nil; if hum.SeatPart then car = hum.SeatPart.Parent end
+    if car and car:IsA("Model") then 
+        local mainPart = car.PrimaryPart or hum.SeatPart
+        mainPart.Velocity = Vector3.new(0,0,0)
+        mainPart.CFrame = targetCF 
+    else 
+        root.CFrame = targetCF
+        root.Velocity = Vector3.new(0,0,0) -- Force stop physics
+    end
 end
 
 local function SendChat(msg)
@@ -218,7 +228,6 @@ local function addOption(name, key, useInput, defaultInputVal, inputCallback)
     local function Toggle()
         States[key] = not States[key]
         b.BackgroundColor3 = States[key] and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(20, 20, 20)
-        -- Notification trigger
         Notify(name .. (States[key] and " [ON]" or " [OFF]"))
     end
     
@@ -262,7 +271,7 @@ UnlockBtn.MouseButton1Click:Connect(function()
     UnlockBtn.BackgroundColor3 = UI_Unlocked and Color3.fromRGB(10,50,10) or Color3.fromRGB(30,10,10)
     for _, obj in pairs(Movable_Objects) do obj.Active = UI_Unlocked; obj.Draggable = UI_Unlocked end
 end)
-local ConfigName = "AngerConfig_V125.json"
+local ConfigName = "AngerConfig_V126.json"
 SaveBtn.MouseButton1Click:Connect(function()
     local data = {}; for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
     if writefile then writefile(ConfigName, game:GetService("HttpService"):JSONEncode(data)); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG" end
@@ -292,13 +301,36 @@ end
 SetSkyBtn.MouseButton1Click:Connect(function() if SkyBox.Text ~= "" then SetSky(SkyBox.Text) end end)
 SpaceSkyBtn.MouseButton1Click:Connect(function() SetSky("159454299") end) 
 
--- [[ MACRO LOGIC (AI RESTORED) ]] --
+-- [[ MACRO LOGIC (FIXED) ]] --
 RecBtn.MouseButton1Click:Connect(function()
     States.IsRecording = not States.IsRecording
-    if States.IsRecording then States.IsPlaying = false; RecordedPath = {}; RecBtn.Text = "STOP REC"; RecBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); AIStatus.Text = "STATUS: RECORDING..."; Notify("RECORDING STARTED") else RecBtn.Text = "RECORD"; RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); AIStatus.Text = "STATUS: SAVED " .. #RecordedPath .. " FRAMES"; Notify("RECORDING STOPPED") end
+    if States.IsRecording then 
+        States.IsPlaying = false
+        RecordedPath = {} 
+        RecBtn.Text = "STOP REC"
+        RecBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        AIStatus.Text = "STATUS: RECORDING..."
+        Notify("RECORDING STARTED") 
+    else 
+        RecBtn.Text = "RECORD"
+        RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10)
+        AIStatus.Text = "STATUS: SAVED " .. #RecordedPath .. " FRAMES"
+        Notify("RECORDING STOPPED") 
+    end
 end)
+
 local function StartPlayback()
     if #RecordedPath == 0 then AIStatus.Text = "ERROR: NO RECORDING"; States.IsPlaying = false; return end
+    
+    -- ANCHOR LOGIC START
+    local char = Player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if root and hum then
+        hum.PlatformStand = true -- Отключаем анимации и физику
+        root.Anchored = true     -- Жестко фиксируем для плавности
+    end
+
     task.spawn(function()
         while States.IsPlaying do
             for i, frame in ipairs(RecordedPath) do
@@ -306,14 +338,43 @@ local function StartPlayback()
                 SmartMove(frame.CF)
                 RunService.Heartbeat:Wait()
             end
-            if not States.LoopPlay then States.IsPlaying = false; PlayBtn.Text = "PLAY"; EmergencyBrake(); Notify("PLAYBACK ENDED"); break end
+            if not States.LoopPlay then 
+                States.IsPlaying = false
+                PlayBtn.Text = "PLAY"
+                PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
+                Notify("PLAYBACK ENDED")
+                break 
+            end
         end
+        -- ANCHOR LOGIC END
+        if Player.Character then
+            local r = Player.Character:FindFirstChild("HumanoidRootPart")
+            local h = Player.Character:FindFirstChild("Humanoid")
+            if r then r.Anchored = false r.Velocity = Vector3.zero end
+            if h then h.PlatformStand = false end
+        end
+        AIStatus.Text = "STATUS: IDLE"
     end)
 end
+
 PlayBtn.MouseButton1Click:Connect(function()
     States.IsPlaying = not States.IsPlaying
-    if States.IsPlaying then States.IsRecording = false; RecBtn.Text = "RECORD"; PlayBtn.Text = "STOP PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0); Notify("PLAYBACK STARTED"); StartPlayback() else PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); EmergencyBrake(); Notify("PLAYBACK STOPPED") end
+    if States.IsPlaying then 
+        States.IsRecording = false
+        RecBtn.Text = "RECORD"
+        RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10)
+        PlayBtn.Text = "STOP PLAY"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        Notify("PLAYBACK STARTED")
+        StartPlayback() 
+    else 
+        PlayBtn.Text = "PLAY"
+        PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
+        EmergencyBrake()
+        Notify("PLAYBACK STOPPED") 
+    end
 end)
+
 LoopBtn.MouseButton1Click:Connect(function()
     States.LoopPlay = not States.LoopPlay
     LoopBtn.Text = States.LoopPlay and "LOOP PLAYBACK: ON" or "LOOP PLAYBACK: OFF"
@@ -321,7 +382,7 @@ LoopBtn.MouseButton1Click:Connect(function()
     Notify("LOOP" .. (States.LoopPlay and " [ON]" or " [OFF]"))
 end)
 
--- [[ AI LOGIC (RESTORED) ]] --
+-- [[ AI LOGIC ]] --
 local AI_Debounce = false
 AIToggleBtn.MouseButton1Click:Connect(function() 
     States.AI = not States.AI
@@ -440,6 +501,13 @@ RunService.RenderStepped:Connect(function()
             if target and target:FindFirstChild("Head") then
                 Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Head.Position), valSmooth)
             end
+        end
+        
+        -- [[ RECORDING LOGIC (MOVED HERE SAFE) ]] --
+        if States.IsRecording then 
+             local pos = root.CFrame
+             if hum and hum.SeatPart then pos = hum.SeatPart.CFrame end
+             table.insert(RecordedPath, {CF = pos}) 
         end
 
         -- [[ INF ZOOM FIX ]] --
