@@ -1,4 +1,4 @@
--- [[ ⛧ AngerPC ⛧ V126 REC-FIX ]] --
+-- [[ ⛧ AngerPC ⛧ V127 GROQ-MUSIC ]] --
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -29,6 +29,14 @@ local ChatHistory = {
     }
 }
 
+-- [[ GROQ MODELS ]] --
+local GroqModels = {
+    "llama-3.3-70b-versatile",
+    "llama-3.1-70b-versatile", 
+    "deepseek-r1-distill-llama-70b"
+}
+local CurrentModelIndex = 1
+
 -- [[ THEME SYSTEM ]] --
 local Themes = { "RGB", "БЕЛЫЙ", "СЕРЫЙ", "ГОЛУБОЙ", "ФИОЛЕТОВЫЙ", "НЕОБЫЧНЫЙ", "РОЗОВЫЙ", "КРАСНЫЙ" }
 local ThemeColors = {
@@ -39,9 +47,13 @@ local ThemeColors = {
 }
 local CurrentThemeIndex = 1 
 
+-- [[ MUSIC SYSTEM ]] --
+local CurrentSound = nil
+local MusicPlaying = false
+
 -- [[ 1. GUI SETUP ]] --
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V126"
+ScreenGui.Name = "AngerGUI_V127"
 ScreenGui.ResetOnSpawn = false 
 
 if Player:FindFirstChild("PlayerGui") then
@@ -60,6 +72,7 @@ local RGB_Objects = {}
 local Movable_Objects = {} 
 local RecordedPath = {}
 local UI_Unlocked = false 
+local ESPLines = {}
 
 local function style(obj, radius, thickness)
     local uiC = Instance.new("UICorner", obj); uiC.CornerRadius = UDim.new(0, radius or 6)
@@ -71,7 +84,7 @@ end
 -- [[ NOTIFICATION SYSTEM ]] --
 local NotifyContainer = Instance.new("Frame", ScreenGui)
 NotifyContainer.Size = UDim2.new(0, 250, 0.4, 0)
-NotifyContainer.Position = UDim2.new(1, -260, 0.55, 0) -- Bottom Right
+NotifyContainer.Position = UDim2.new(1, -260, 0.55, 0)
 NotifyContainer.BackgroundTransparency = 1
 local NotifyLayout = Instance.new("UIListLayout", NotifyContainer)
 NotifyLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -108,6 +121,74 @@ local function Notify(text)
     end)
 end
 
+-- // MUSIC WIDGET // --
+local MusicWidget = Instance.new("Frame", ScreenGui)
+MusicWidget.Size = UDim2.new(0, 200, 0, 120)
+MusicWidget.Position = UDim2.new(1, -210, 1, -130)
+MusicWidget.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MusicWidget.Visible = false
+MusicWidget.Active = true
+MusicWidget.Draggable = true
+style(MusicWidget, 8, 2)
+table.insert(Movable_Objects, MusicWidget)
+
+local MusicIcon = Instance.new("ImageLabel", MusicWidget)
+MusicIcon.Size = UDim2.new(0, 50, 0, 50)
+MusicIcon.Position = UDim2.new(0, 10, 0, 10)
+MusicIcon.BackgroundTransparency = 1
+MusicIcon.Image = "rbxassetid://6031265976"
+
+local MusicTitle = Instance.new("TextLabel", MusicWidget)
+MusicTitle.Size = UDim2.new(1, -70, 0, 25)
+MusicTitle.Position = UDim2.new(0, 65, 0, 10)
+MusicTitle.BackgroundTransparency = 1
+MusicTitle.Text = "NO MUSIC"
+MusicTitle.TextColor3 = Color3.new(1, 1, 1)
+MusicTitle.Font = Enum.Font.SciFi
+MusicTitle.TextSize = 14
+MusicTitle.TextXAlignment = Enum.TextXAlignment.Left
+MusicTitle.TextScaled = true
+
+local MusicStatus = Instance.new("TextLabel", MusicWidget)
+MusicStatus.Size = UDim2.new(1, -70, 0, 20)
+MusicStatus.Position = UDim2.new(0, 65, 0, 35)
+MusicStatus.BackgroundTransparency = 1
+MusicStatus.Text = "IDLE"
+MusicStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+MusicStatus.Font = Enum.Font.SciFi
+MusicStatus.TextSize = 12
+MusicStatus.TextXAlignment = Enum.TextXAlignment.Left
+
+local BtnPlayPause = Instance.new("TextButton", MusicWidget)
+BtnPlayPause.Size = UDim2.new(0.3, -5, 0, 30)
+BtnPlayPause.Position = UDim2.new(0, 10, 1, -40)
+BtnPlayPause.Text = "PLAY"
+BtnPlayPause.BackgroundColor3 = Color3.fromRGB(20, 40, 20)
+BtnPlayPause.TextColor3 = Color3.new(1, 1, 1)
+BtnPlayPause.Font = Enum.Font.SciFi
+BtnPlayPause.TextSize = 12
+style(BtnPlayPause)
+
+local BtnStop = Instance.new("TextButton", MusicWidget)
+BtnStop.Size = UDim2.new(0.3, -5, 0, 30)
+BtnStop.Position = UDim2.new(0.35, 0, 1, -40)
+BtnStop.Text = "STOP"
+BtnStop.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+BtnStop.TextColor3 = Color3.new(1, 1, 1)
+BtnStop.Font = Enum.Font.SciFi
+BtnStop.TextSize = 12
+style(BtnStop)
+
+local BtnSkip = Instance.new("TextButton", MusicWidget)
+BtnSkip.Size = UDim2.new(0.3, -5, 0, 30)
+BtnSkip.Position = UDim2.new(0.7, 0, 1, -40)
+BtnSkip.Text = "SKIP"
+BtnSkip.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+BtnSkip.TextColor3 = Color3.new(1, 1, 1)
+BtnSkip.Font = Enum.Font.SciFi
+BtnSkip.TextSize = 12
+style(BtnSkip)
+
 -- // MAIN MENU // --
 local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 480, 0, 550); Main.Position = UDim2.new(0.1, 0, 0.2, 0); Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10); Main.Visible = true; Main.Active = true; Main.Draggable = true; style(Main, 8, 2); table.insert(Movable_Objects, Main)
 
@@ -116,13 +197,13 @@ local TabFrame = Instance.new("Frame", Main); TabFrame.Size = UDim2.new(1, -20, 
 local layoutTabs = Instance.new("UIListLayout", TabFrame); layoutTabs.FillDirection=Enum.FillDirection.Horizontal; layoutTabs.Padding=UDim.new(0,5)
 
 local function MakeTab(text)
-    local b = Instance.new("TextButton", TabFrame); b.Size=UDim2.new(0.19,0,1,0); b.BackgroundColor3=Color3.fromRGB(20,20,20); b.Text=text; b.TextColor3=Color3.new(1,1,1); b.Font=Enum.Font.SciFi; style(b); b.TextScaled = true
+    local b = Instance.new("TextButton", TabFrame); b.Size=UDim2.new(0.16,0,1,0); b.BackgroundColor3=Color3.fromRGB(20,20,20); b.Text=text; b.TextColor3=Color3.new(1,1,1); b.Font=Enum.Font.SciFi; style(b); b.TextScaled = true
     return b
 end
-local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI"); local btnTabWorld = MakeTab("WORLD"); local btnTabUI = MakeTab("UI")
+local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI"); local btnTabWorld = MakeTab("WORLD"); local btnTabUI = MakeTab("UI"); local btnTabMusic = MakeTab("MUSIC")
 
 -- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V126 (REC FIXED)"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
+local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V127 (GROQ+MUSIC)"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
 
 -- // PAGES // --
 local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
@@ -130,12 +211,14 @@ local PageInfo = Instance.new("Frame", Main); PageInfo.Size=UDim2.new(1,-20,0.78
 local PageAI = Instance.new("Frame", Main); PageAI.Size=UDim2.new(1,-20,0.78,0); PageAI.Position=UDim2.new(0,10,0.18,0); PageAI.BackgroundTransparency=1; PageAI.Visible=false
 local PageWorld = Instance.new("Frame", Main); PageWorld.Size=UDim2.new(1,-20,0.78,0); PageWorld.Position=UDim2.new(0,10,0.18,0); PageWorld.BackgroundTransparency=1; PageWorld.Visible=false
 local PageUI = Instance.new("Frame", Main); PageUI.Size=UDim2.new(1,-20,0.78,0); PageUI.Position=UDim2.new(0,10,0.18,0); PageUI.BackgroundTransparency=1; PageUI.Visible=false
+local PageMusic = Instance.new("ScrollingFrame", Main); PageMusic.Size=UDim2.new(1,-20,0.78,0); PageMusic.Position=UDim2.new(0,10,0.18,0); PageMusic.BackgroundTransparency=1; PageMusic.ScrollBarThickness=2; PageMusic.Visible=false; Instance.new("UIListLayout", PageMusic).Padding=UDim.new(0,8)
 
-btnTabMain.MouseButton1Click:Connect(function() PageMain.Visible=true; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false end)
-btnTabInfo.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=true; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false end)
-btnTabAI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=true; PageWorld.Visible=false; PageUI.Visible=false end)
-btnTabWorld.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=true; PageUI.Visible=false end)
-btnTabUI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=true end)
+btnTabMain.MouseButton1Click:Connect(function() PageMain.Visible=true; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
+btnTabInfo.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=true; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
+btnTabAI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=true; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
+btnTabWorld.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=true; PageUI.Visible=false; PageMusic.Visible=false end)
+btnTabUI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=true; PageMusic.Visible=false end)
+btnTabMusic.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=true end)
 
 -- INFO PAGE
 local InfoLabel = Instance.new("TextLabel", PageInfo); InfoLabel.Size = UDim2.new(1,0,1,0); InfoLabel.BackgroundTransparency = 1; InfoLabel.TextColor3 = Color3.new(1,1,1); InfoLabel.TextSize = 18; InfoLabel.TextYAlignment = Enum.TextYAlignment.Top; InfoLabel.Text = "Loading stats..."
@@ -148,17 +231,34 @@ local SetSkyBtn = Instance.new("TextButton", PageWorld); SetSkyBtn.Size = UDim2.
 local SpaceSkyBtn = Instance.new("TextButton", PageWorld); SpaceSkyBtn.Size = UDim2.new(1, 0, 0, 40); SpaceSkyBtn.Position=UDim2.new(0,0,0.45,0); SpaceSkyBtn.Text = "SET SPACE SKY"; SpaceSkyBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 40); SpaceSkyBtn.TextColor3 = Color3.new(1, 1, 1); style(SpaceSkyBtn)
 
 -- // AI PAGE // --
-local AIKeyBox = Instance.new("TextBox", PageAI); AIKeyBox.Size = UDim2.new(1, 0, 0, 40); AIKeyBox.Position = UDim2.new(0,0,0,0); AIKeyBox.PlaceholderText = "OPENAI KEY"; AIKeyBox.Text = ""; AIKeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); AIKeyBox.TextColor3 = Color3.new(1, 1, 1); style(AIKeyBox)
-local AIToggleBtn = Instance.new("TextButton", PageAI); AIToggleBtn.Size = UDim2.new(1, 0, 0, 40); AIToggleBtn.Position = UDim2.new(0, 0, 0.1, 0); AIToggleBtn.Text = "AI AUTOREPLY: OFF"; AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AIToggleBtn.TextColor3 = Color3.new(1, 1, 1); style(AIToggleBtn)
-local FriendBtn = Instance.new("TextButton", PageAI); FriendBtn.Size = UDim2.new(1, 0, 0, 40); FriendBtn.Position = UDim2.new(0, 0, 0.2, 0); FriendBtn.Text = "FRIEND BOT: OFF"; FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FriendBtn.TextColor3 = Color3.new(1, 1, 1); style(FriendBtn)
-local RecBtn = Instance.new("TextButton", PageAI); RecBtn.Size = UDim2.new(0.48, 0, 0, 40); RecBtn.Position = UDim2.new(0, 0, 0.4, 0); RecBtn.Text = "RECORD"; RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); RecBtn.TextColor3 = Color3.new(1, 1, 1); style(RecBtn)
-local PlayBtn = Instance.new("TextButton", PageAI); PlayBtn.Size = UDim2.new(0.48, 0, 0, 40); PlayBtn.Position = UDim2.new(0.52, 0, 0.4, 0); PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); PlayBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayBtn)
-local LoopBtn = Instance.new("TextButton", PageAI); LoopBtn.Size = UDim2.new(1, 0, 0, 40); LoopBtn.Position = UDim2.new(0, 0, 0.5, 0); LoopBtn.Text = "LOOP PLAYBACK: OFF"; LoopBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); LoopBtn.TextColor3 = Color3.new(1, 1, 1); style(LoopBtn)
-local AIStatus = Instance.new("TextLabel", PageAI); AIStatus.Size = UDim2.new(1, 0, 0, 30); AIStatus.Position = UDim2.new(0, 0, 0.62, 0); AIStatus.BackgroundTransparency = 1; AIStatus.Text = "STATUS: IDLE"; AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150); style(AIStatus, 0, 0)
+local AIKeyBox = Instance.new("TextBox", PageAI); AIKeyBox.Size = UDim2.new(1, 0, 0, 40); AIKeyBox.Position = UDim2.new(0,0,0,0); AIKeyBox.PlaceholderText = "GROQ API KEY"; AIKeyBox.Text = ""; AIKeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); AIKeyBox.TextColor3 = Color3.new(1, 1, 1); style(AIKeyBox)
+
+local ModelBtn = Instance.new("TextButton", PageAI); ModelBtn.Size = UDim2.new(1, 0, 0, 40); ModelBtn.Position = UDim2.new(0, 0, 0.09, 0); ModelBtn.Text = "MODEL: " .. GroqModels[CurrentModelIndex]; ModelBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); ModelBtn.TextColor3 = Color3.new(1, 1, 1); ModelBtn.Font = Enum.Font.SciFi; ModelBtn.TextSize = 14; style(ModelBtn)
+
+local AIToggleBtn = Instance.new("TextButton", PageAI); AIToggleBtn.Size = UDim2.new(1, 0, 0, 40); AIToggleBtn.Position = UDim2.new(0, 0, 0.19, 0); AIToggleBtn.Text = "AI AUTOREPLY: OFF"; AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AIToggleBtn.TextColor3 = Color3.new(1, 1, 1); style(AIToggleBtn)
+local FriendBtn = Instance.new("TextButton", PageAI); FriendBtn.Size = UDim2.new(1, 0, 0, 40); FriendBtn.Position = UDim2.new(0, 0, 0.29, 0); FriendBtn.Text = "FRIEND BOT: OFF"; FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FriendBtn.TextColor3 = Color3.new(1, 1, 1); style(FriendBtn)
+local RecBtn = Instance.new("TextButton", PageAI); RecBtn.Size = UDim2.new(0.48, 0, 0, 40); RecBtn.Position = UDim2.new(0, 0, 0.49, 0); RecBtn.Text = "RECORD"; RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); RecBtn.TextColor3 = Color3.new(1, 1, 1); style(RecBtn)
+local PlayBtn = Instance.new("TextButton", PageAI); PlayBtn.Size = UDim2.new(0.48, 0, 0, 40); PlayBtn.Position = UDim2.new(0.52, 0, 0.49, 0); PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); PlayBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayBtn)
+local LoopBtn = Instance.new("TextButton", PageAI); LoopBtn.Size = UDim2.new(1, 0, 0, 40); LoopBtn.Position = UDim2.new(0, 0, 0.59, 0); LoopBtn.Text = "LOOP PLAYBACK: OFF"; LoopBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); LoopBtn.TextColor3 = Color3.new(1, 1, 1); style(LoopBtn)
+local AIStatus = Instance.new("TextLabel", PageAI); AIStatus.Size = UDim2.new(1, 0, 0, 30); AIStatus.Position = UDim2.new(0, 0, 0.71, 0); AIStatus.BackgroundTransparency = 1; AIStatus.Text = "STATUS: IDLE"; AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150); style(AIStatus, 0, 0)
 
 -- // UI PAGE // --
 local UnlockBtn = Instance.new("TextButton", PageUI); UnlockBtn.Size = UDim2.new(1, 0, 0, 40); UnlockBtn.Position = UDim2.new(0,0,0,0); UnlockBtn.Text = "UNLOCK MOVING: OFF"; UnlockBtn.BackgroundColor3 = Color3.fromRGB(30,10,10); UnlockBtn.TextColor3 = Color3.new(1,1,1); style(UnlockBtn)
 local SaveBtn = Instance.new("TextButton", PageUI); SaveBtn.Size = UDim2.new(1, 0, 0, 40); SaveBtn.Position = UDim2.new(0,0,0.12,0); SaveBtn.Text = "SAVE CONFIG"; SaveBtn.BackgroundColor3 = Color3.fromRGB(20,20,40); SaveBtn.TextColor3 = Color3.new(1,1,1); style(SaveBtn)
+
+-- // MUSIC PAGE // --
+local MusicIDBox = Instance.new("TextBox", PageMusic); MusicIDBox.Size = UDim2.new(1, 0, 0, 40); MusicIDBox.PlaceholderText = "ROBLOX AUDIO ID"; MusicIDBox.Text = ""; MusicIDBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); MusicIDBox.TextColor3 = Color3.new(1, 1, 1); style(MusicIDBox)
+local PlayIDBtn = Instance.new("TextButton", PageMusic); PlayIDBtn.Size = UDim2.new(1, 0, 0, 40); PlayIDBtn.Text = "PLAY BY ID"; PlayIDBtn.BackgroundColor3 = Color3.fromRGB(20, 40, 20); PlayIDBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayIDBtn)
+
+local YouTubeLinkBox = Instance.new("TextBox", PageMusic); YouTubeLinkBox.Size = UDim2.new(1, 0, 0, 40); YouTubeLinkBox.PlaceholderText = "YOUTUBE LINK"; YouTubeLinkBox.Text = ""; YouTubeLinkBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); YouTubeLinkBox.TextColor3 = Color3.new(1, 1, 1); style(YouTubeLinkBox)
+local PlayYTBtn = Instance.new("TextButton", PageMusic); PlayYTBtn.Size = UDim2.new(1, 0, 0, 40); PlayYTBtn.Text = "PLAY FROM YOUTUBE"; PlayYTBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20); PlayYTBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayYTBtn)
+
+local SearchBox = Instance.new("TextBox", PageMusic); SearchBox.Size = UDim2.new(1, 0, 0, 40); SearchBox.PlaceholderText = "SEARCH BY NAME"; SearchBox.Text = ""; SearchBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); SearchBox.TextColor3 = Color3.new(1, 1, 1); style(SearchBox)
+local SearchBtn = Instance.new("TextButton", PageMusic); SearchBtn.Size = UDim2.new(1, 0, 0, 40); SearchBtn.Text = "SEARCH MUSIC"; SearchBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 40); SearchBtn.TextColor3 = Color3.new(1, 1, 1); style(SearchBtn)
+
+local StopMusicBtn = Instance.new("TextButton", PageMusic); StopMusicBtn.Size = UDim2.new(1, 0, 0, 40); StopMusicBtn.Text = "STOP MUSIC"; StopMusicBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); StopMusicBtn.TextColor3 = Color3.new(1, 1, 1); style(StopMusicBtn)
+
+local VolumeSlider = Instance.new("TextBox", PageMusic); VolumeSlider.Size = UDim2.new(1, 0, 0, 40); VolumeSlider.PlaceholderText = "VOLUME (0-10)"; VolumeSlider.Text = "5"; VolumeSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 20); VolumeSlider.TextColor3 = Color3.new(1, 1, 1); style(VolumeSlider)
 
 -- FLY BUTTONS
 local btnUp = Instance.new("TextButton", PageWorld); btnUp.Size = UDim2.new(0.45, 0, 0, 40); btnUp.Position = UDim2.new(0, 0, 0.6, 0); btnUp.Text = "FLY UP"; btnUp.BackgroundColor3 = Color3.fromRGB(20,20,20); btnUp.TextColor3 = Color3.new(1,1,1); style(btnUp)
@@ -172,7 +272,7 @@ local States = {
     SpdBypass = false, Fly = false, Spd = false, Jump = false, Circle = false, UsePentagram = false,
     Ghosts = false, Esp = false, RGB = false, Fullbright = false, InfJump = false, AntiAfk = true,
     NoFog = false, AmbientSync = false, AI = false, FriendBot = false, IsFollowing = true, 
-    IsRecording = false, IsPlaying = false, LoopPlay = false
+    IsRecording = false, IsPlaying = false, LoopPlay = false, KillAura = false
 } 
 local valSmooth, valHitbox, valFlySpeed, valSpeed, valBypassSpeed, valJumpPower, valRipple, valGhostRate = 0.15, 5, 5, 50, 0.11, 100, 15, 0.05
 local up, down = false, false
@@ -180,6 +280,78 @@ local up, down = false, false
 local function EmergencyBrake()
     local char = Player.Character; if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.Velocity = Vector3.new(0,0,0); char.HumanoidRootPart.RotVelocity = Vector3.new(0,0,0) end
 end
+
+-- [[ MUSIC FUNCTIONS ]] --
+local function PlayMusic(audioId, title)
+    if CurrentSound then CurrentSound:Stop(); CurrentSound:Destroy(); CurrentSound = nil end
+    CurrentSound = Instance.new("Sound", workspace)
+    CurrentSound.SoundId = "rbxassetid://" .. audioId
+    CurrentSound.Volume = tonumber(VolumeSlider.Text) or 5
+    CurrentSound.Looped = true
+    CurrentSound:Play()
+    MusicPlaying = true
+    MusicTitle.Text = title or "MUSIC"
+    MusicStatus.Text = "PLAYING"
+    MusicWidget.Visible = true
+    BtnPlayPause.Text = "PAUSE"
+    Notify("MUSIC STARTED")
+end
+
+local function StopMusic()
+    if CurrentSound then CurrentSound:Stop(); CurrentSound:Destroy(); CurrentSound = nil end
+    MusicPlaying = false
+    MusicTitle.Text = "NO MUSIC"
+    MusicStatus.Text = "STOPPED"
+    BtnPlayPause.Text = "PLAY"
+    Notify("MUSIC STOPPED")
+end
+
+local function TogglePlayPause()
+    if not CurrentSound then return end
+    if MusicPlaying then
+        CurrentSound:Pause()
+        MusicPlaying = false
+        MusicStatus.Text = "PAUSED"
+        BtnPlayPause.Text = "PLAY"
+    else
+        CurrentSound:Resume()
+        MusicPlaying = true
+        MusicStatus.Text = "PLAYING"
+        BtnPlayPause.Text = "PAUSE"
+    end
+end
+
+PlayIDBtn.MouseButton1Click:Connect(function()
+    local id = MusicIDBox.Text
+    if id ~= "" then
+        PlayMusic(id, "ID: " .. id)
+    end
+end)
+
+StopMusicBtn.MouseButton1Click:Connect(function() StopMusic() end)
+BtnPlayPause.MouseButton1Click:Connect(function() TogglePlayPause() end)
+BtnStop.MouseButton1Click:Connect(function() StopMusic() end)
+
+VolumeSlider.FocusLost:Connect(function()
+    local vol = tonumber(VolumeSlider.Text)
+    if vol and CurrentSound then
+        CurrentSound.Volume = math.clamp(vol, 0, 10)
+    end
+end)
+
+PlayYTBtn.MouseButton1Click:Connect(function()
+    local link = YouTubeLinkBox.Text
+    if link ~= "" then
+        Notify("YT CONVERSION NOT AVAILABLE")
+    end
+end)
+
+SearchBtn.MouseButton1Click:Connect(function()
+    local query = SearchBox.Text
+    if query ~= "" then
+        Notify("MUSIC SEARCH NOT AVAILABLE")
+    end
+end)
 
 -- [[ FIXED REPLAY MOVEMENT ]] --
 local function SmartMove(targetCF)
@@ -195,7 +367,7 @@ local function SmartMove(targetCF)
         mainPart.CFrame = targetCF 
     else 
         root.CFrame = targetCF
-        root.Velocity = Vector3.new(0,0,0) -- Force stop physics
+        root.Velocity = Vector3.new(0,0,0)
     end
 end
 
@@ -218,6 +390,12 @@ end
 
 local btnTheme = Instance.new("TextButton", PageMain); btnTheme.Size = UDim2.new(1, 0, 0, 40); btnTheme.BackgroundColor3 = Color3.fromRGB(25, 25, 25); btnTheme.Text = "THEME: " .. Themes[CurrentThemeIndex]; btnTheme.TextColor3 = Color3.new(1,1,1); btnTheme.Font = Enum.Font.SciFi; btnTheme.TextSize = 16; style(btnTheme)
 btnTheme.MouseButton1Click:Connect(function() CurrentThemeIndex = CurrentThemeIndex + 1; if CurrentThemeIndex > #Themes then CurrentThemeIndex = 1 end; btnTheme.Text = "THEME: " .. Themes[CurrentThemeIndex] end)
+
+ModelBtn.MouseButton1Click:Connect(function()
+    CurrentModelIndex = CurrentModelIndex + 1
+    if CurrentModelIndex > #GroqModels then CurrentModelIndex = 1 end
+    ModelBtn.Text = "MODEL: " .. GroqModels[CurrentModelIndex]
+end)
 
 local function addOption(name, key, useInput, defaultInputVal, inputCallback)
     local f = Instance.new("Frame", PageMain); f.Size = UDim2.new(1, 0, 0, 40); f.BackgroundTransparency = 1
@@ -271,7 +449,7 @@ UnlockBtn.MouseButton1Click:Connect(function()
     UnlockBtn.BackgroundColor3 = UI_Unlocked and Color3.fromRGB(10,50,10) or Color3.fromRGB(30,10,10)
     for _, obj in pairs(Movable_Objects) do obj.Active = UI_Unlocked; obj.Draggable = UI_Unlocked end
 end)
-local ConfigName = "AngerConfig_V126.json"
+local ConfigName = "AngerConfig_V127.json"
 SaveBtn.MouseButton1Click:Connect(function()
     local data = {}; for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
     if writefile then writefile(ConfigName, game:GetService("HttpService"):JSONEncode(data)); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG" end
@@ -322,13 +500,12 @@ end)
 local function StartPlayback()
     if #RecordedPath == 0 then AIStatus.Text = "ERROR: NO RECORDING"; States.IsPlaying = false; return end
     
-    -- ANCHOR LOGIC START
     local char = Player.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChild("Humanoid")
     if root and hum then
-        hum.PlatformStand = true -- Отключаем анимации и физику
-        root.Anchored = true     -- Жестко фиксируем для плавности
+        hum.PlatformStand = true
+        root.Anchored = true
     end
 
     task.spawn(function()
@@ -346,7 +523,6 @@ local function StartPlayback()
                 break 
             end
         end
-        -- ANCHOR LOGIC END
         if Player.Character then
             local r = Player.Character:FindFirstChild("HumanoidRootPart")
             local h = Player.Character:FindFirstChild("Humanoid")
@@ -382,7 +558,7 @@ LoopBtn.MouseButton1Click:Connect(function()
     Notify("LOOP" .. (States.LoopPlay and " [ON]" or " [OFF]"))
 end)
 
--- [[ AI LOGIC ]] --
+-- [[ AI LOGIC (GROQ) ]] --
 local AI_Debounce = false
 AIToggleBtn.MouseButton1Click:Connect(function() 
     States.AI = not States.AI
@@ -417,12 +593,33 @@ local function ProcessAI(msg, senderName)
     table.insert(ChatHistory, {role = "user", content = senderName .. ": " .. msg})
     if #ChatHistory > 10 then table.remove(ChatHistory, 2) end
     local success, response = pcall(function()
-        if request then return request({ Url = "https://api.openai.com/v1/chat/completions", Method = "POST", Headers = {["Content-Type"] = "application/json", ["Authorization"] = "Bearer " .. apiKey}, Body = HttpService:JSONEncode({ model = "gpt-4o-mini", messages = ChatHistory, max_tokens = 60 }) }) end
+        if request then return request({ 
+            Url = "https://api.groq.com/openai/v1/chat/completions", 
+            Method = "POST", 
+            Headers = {
+                ["Content-Type"] = "application/json", 
+                ["Authorization"] = "Bearer " .. apiKey
+            }, 
+            Body = HttpService:JSONEncode({ 
+                model = GroqModels[CurrentModelIndex], 
+                messages = ChatHistory, 
+                max_tokens = 60 
+            }) 
+        }) end
     end)
     if success and response and response.Body then 
         local data = HttpService:JSONDecode(response.Body)
-        if data.choices and data.choices[1] then local reply = data.choices[1].message.content; SendChat(reply); table.insert(ChatHistory, {role = "assistant", content = reply}); AIStatus.Text = "STATUS: REPLIED" else AIStatus.Text = "ERROR: API FAIL" end
-    else AIStatus.Text = "ERROR: REQUEST FAIL" end
+        if data.choices and data.choices[1] then 
+            local reply = data.choices[1].message.content
+            SendChat(reply)
+            table.insert(ChatHistory, {role = "assistant", content = reply})
+            AIStatus.Text = "STATUS: REPLIED" 
+        else 
+            AIStatus.Text = "ERROR: API FAIL" 
+        end
+    else 
+        AIStatus.Text = "ERROR: REQUEST FAIL" 
+    end
     task.wait(2); AI_Debounce = false; task.wait(1); AIStatus.Text = "STATUS: WAITING..."
 end
 for _, p in pairs(Players:GetPlayers()) do p.Chatted:Connect(function(msg) if p ~= Player then ProcessAI(msg, p.Name) end end) end
@@ -458,6 +655,53 @@ Player.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid").Died:Connect(function() DeathScreen.Enabled = true end)
 end)
 
+-- [[ ESP LINES ]] --
+local function CreateESPLine(player)
+    if ESPLines[player] then return end
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Color = Color3.new(1, 1, 1)
+    line.Thickness = 1
+    line.Transparency = 1
+    ESPLines[player] = line
+end
+
+local function UpdateESPLines(activeColor)
+    for player, line in pairs(ESPLines) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and States.Esp then
+            local char = player.Character
+            local rootPart = char.HumanoidRootPart
+            local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            
+            if onScreen then
+                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                line.To = Vector2.new(vector.X, vector.Y)
+                line.Color = activeColor
+                line.Visible = true
+            else
+                line.Visible = false
+            end
+        else
+            line.Visible = false
+        end
+    end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= Player then CreateESPLine(player) end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    CreateESPLine(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if ESPLines[player] then
+        ESPLines[player]:Remove()
+        ESPLines[player] = nil
+    end
+end)
+
 -- [[ RENDER LOOP ]] --
 local lastGhostTime = 0
 RunService.RenderStepped:Connect(function()
@@ -477,13 +721,14 @@ RunService.RenderStepped:Connect(function()
             else table.remove(RGB_Objects, i) end 
         end
         
+        UpdateESPLines(activeColor)
+        
         local wm = ScreenGui.Parent:FindFirstChild("AngerWatermark"); if wm then wm.Enabled = States.Watermark end
         if PageInfo.Visible then InfoLabel.Text = string.format("SESSION:\nUser: %s\nID: %s\nFPS: %d\nPing: %d ms", Player.Name, SessionID, math.floor(workspace:GetRealPhysicsFPS()), math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())) end
 
         local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         local hum = char:FindFirstChild("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
 
-        -- [[ ANTI KNOCKBACK FIX ]] --
         if States.AntiKnockback then
              if root.Velocity.Magnitude > 25 then
                  if hum.MoveDirection.Magnitude > 0 then
@@ -495,7 +740,6 @@ RunService.RenderStepped:Connect(function()
              end
         end
 
-        -- [[ AIMBOT LOGIC ]] --
         if States.Aim then
             local target = GetClosestPlayer()
             if target and target:FindFirstChild("Head") then
@@ -503,14 +747,12 @@ RunService.RenderStepped:Connect(function()
             end
         end
         
-        -- [[ RECORDING LOGIC (MOVED HERE SAFE) ]] --
         if States.IsRecording then 
              local pos = root.CFrame
              if hum and hum.SeatPart then pos = hum.SeatPart.CFrame end
              table.insert(RecordedPath, {CF = pos}) 
         end
 
-        -- [[ INF ZOOM FIX ]] --
         if States.UnlockAll then 
             Player.CameraMaxZoomDistance = 100000
             Player.CameraMinZoomDistance = 0 
@@ -538,7 +780,6 @@ RunService.RenderStepped:Connect(function()
             for _, v in pairs(game.Players:GetPlayers()) do if v.Character and v.Character:FindFirstChild("AngerESP") then v.Character.AngerESP:Destroy() end end
         end
 
-        -- [[ HITBOX FIX ]] --
         for _, v in pairs(game.Players:GetPlayers()) do 
             if v ~= Player and v.Character and v.Character:FindFirstChild("Head") then 
                 local head = v.Character.Head
@@ -563,7 +804,7 @@ Player.Idled:Connect(function() if States.AntiAfk then VirtualUser:CaptureContro
 -- ASSET LOADING
 task.spawn(function()
     local urlLogo = "https://raw.githubusercontent.com/AngerPC-DEV/AngerMOD/main/AngerMOD.png"
-    local fileLogo = "AngerMOD_Logo_V104.png"
+    local fileLogo = "AngerMOD_Logo_V127.png"
     if writefile and readfile then pcall(function() if not isfile(fileLogo) then writefile(fileLogo, game:HttpGet(urlLogo)) end end) end
     local lg = Instance.new("ScreenGui", ScreenGui.Parent); lg.Name = "AngerWatermark"; local im = Instance.new("ImageLabel", lg); im.Size = UDim2.new(0, 200, 0, 100); im.Position = UDim2.new(0, 10, 0, 10); im.BackgroundTransparency = 1; im.BorderSizePixel = 0; local stroke = Instance.new("UIStroke", im); stroke.Thickness = 3; stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; stroke.Color = Color3.new(1, 0, 0); table.insert(RGB_Objects, {Type = "Stroke", Instance = stroke})
     local s, a = pcall(function() return getcustomasset(fileLogo) end); if s then im.Image = a else im.Image = urlLogo end
@@ -574,3 +815,5 @@ task.spawn(function()
     local pentagramName = "Anger_Pentagram_Circle1.png"
     if writefile and readfile and isfile then pcall(function() if not isfile(pentagramName) then writefile(pentagramName, game:HttpGet(pentagramUrl)) end end) end
 end)
+
+Notify("AngerPC V127 LOADED")
