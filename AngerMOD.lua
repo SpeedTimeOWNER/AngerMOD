@@ -1,945 +1,1516 @@
--- [[ ⛧ AngerPC ⛧ V127 GROQ-MUSIC ]] --
+--[[
+    ╔══════════════════════════════════════════╗
+    ║         AngerMOD V-2  |  ROBLOX          ║
+    ║   Все функции рабочие + система ключей   ║
+    ╚══════════════════════════════════════════╝
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
-local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Debris = game:GetService("Debris")
-local VirtualUser = game:GetService("VirtualUser")
-local Lighting = game:GetService("Lighting")
-local Stats = game:GetService("Stats")
-local HttpService = game:GetService("HttpService")
-local Player = Players.LocalPlayer
+    УСТАНОВКА:
+    1. Положи key.txt рядом со скриптом (для executor'ов)
+       Каждая строка = отдельный пароль
+    2. Выполни скрипт через executor (напр. Synapse X, KRNL, Fluxus)
 
--- [[ DELTA COMPATIBILITY ]] --
-local request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-local getcustomasset = getcustomasset or getsynasset
+    key.txt пример:
+        ANGER-2025-ALPHA
+        ANGER-VIP-001
+        TESTKEY123
+]]
 
--- [[ SESSION INFO ]] --
-local SessionID = string.upper(HttpService:GenerateGUID(false):sub(1, 8))
+-- ══════════════════════════════════════════════════════
+--  СЕРВИСЫ
+-- ══════════════════════════════════════════════════════
+local Players            = game:GetService("Players")
+local RunService         = game:GetService("RunService")
+local UserInputService   = game:GetService("UserInputService")
+local TweenService       = game:GetService("TweenService")
+local Workspace          = game:GetService("Workspace")
+local CollectionService  = game:GetService("CollectionService")
+local ReplicatedStorage  = game:GetService("ReplicatedStorage")
 
--- [[ MEMORY SYSTEM (AI) ]] --
-local ChatHistory = {
-    {
-        role = "system",
-        content = "Ты — AngerPC, крутой ИИ-бот в Roblox. Создатель: AngerPC-DEV. Характер: дерзкий, краткий."
+local LocalPlayer        = Players.LocalPlayer
+local PlayerGui          = LocalPlayer:WaitForChild("PlayerGui")
+local Camera             = Workspace.CurrentCamera
+
+-- ══════════════════════════════════════════════════════
+--  ЧТЕНИЕ key.txt
+-- ══════════════════════════════════════════════════════
+local validKeys = {}
+
+local function loadKeys()
+    -- Попытка прочитать key.txt через executor API
+    local ok, result = pcall(function()
+        return readfile("key.txt")
+    end)
+    if ok and result then
+        for line in result:gmatch("[^\r\n]+") do
+            local trimmed = line:match("^%s*(.-)%s*$")
+            if trimmed ~= "" then
+                table.insert(validKeys, trimmed)
+            end
+        end
+        return true
+    end
+    -- Fallback — встроенные ключи если key.txt не найден
+    validKeys = {
+    "AngerMOD-1D-YXBH3WH0JS",
+    "AngerMOD-1D-ANCOODMI9N",
+    "AngerMOD-1D-RZTVXYNNZ8",
+    "AngerMOD-1D-43S92TGYPW",
+    "AngerMOD-1D-UTFXZC97QN",
+    "AngerMOD-1D-5ALUDZMCLA",
+    "AngerMOD-1D-R6017AOPOU",
+    "AngerMOD-1D-HIGX3JLKZB",
+    "AngerMOD-1D-EN2C8LUHV5",
+    "AngerMOD-1D-BJQ861YYC1",
+    "AngerMOD-1D-2SCSVF7GDN",
+    "AngerMOD-1D-O7TBXLH7UF",
+    "AngerMOD-1D-KG8FR2CK07",
+    "AngerMOD-1D-R3703GZBYI",
+    "AngerMOD-1D-DGMWQJNGLL",
+    "AngerMOD-1D-PVO68Q8Q7J",
+    "AngerMOD-1D-VBRYTNK6MY",
+    "AngerMOD-1D-X2AHRAL743",
+    "AngerMOD-1D-Q5DM9268FN",
+    "AngerMOD-1D-HOCO0S90MI",
+    "AngerMOD-1D-D0UN4BIL07",
+    "AngerMOD-1D-WGQ6FJQX52",
+    "AngerMOD-1D-ZF5J7UKQTP",
+    "AngerMOD-1D-5TLP74NZV5",
+    "AngerMOD-1D-ZXUFEN4UWY",
+    "AngerMOD-1D-VU6OHLZKW7",
+    "AngerMOD-1D-XN3LF7TLLM",
+    "AngerMOD-1D-1USK0EQXUE",
+    "AngerMOD-1D-IW2SXXI899",
+    "AngerMOD-1D-7ZUFG3WRMR",
+    "AngerMOD-1D-Y4NN864RGV",
+    "AngerMOD-1D-ROZ9B7LA2L",
+    "AngerMOD-1D-EZUFQDW0KJ",
+    "AngerMOD-1D-7Z0CRQQBC1",
+    "AngerMOD-1D-DGFKN9G7RO",
+    "AngerMOD-1D-BMR3LNMPCU",
+    "AngerMOD-1D-KVAJ0F1C10",
+    "AngerMOD-1D-QB180KFOCR",
+    "AngerMOD-1D-9D7IOOC5GA",
+    "AngerMOD-1D-4NEHGGJC5A",
+    "AngerMOD-1D-2CI33VFBO6",
+    "AngerMOD-1D-S4ZQC2PLYY",
+    "AngerMOD-1D-VVOSLBHSN6",
+    "AngerMOD-1D-3DI99V5GRN",
+    "AngerMOD-1D-0LN1KXWZPU",
+    "AngerMOD-1D-9FXVCILBDQ",
+    "AngerMOD-1D-R2B5FH9G0E",
+    "AngerMOD-1D-U9VSSZ0JFB",
+    "AngerMOD-1D-A64FO4KI5M",
+    "AngerMOD-1D-9ODCD94L8G",
+    "AngerMOD-1D-NXAMMDSGIZ",
+    "AngerMOD-1D-U6WZ139HN7",
+    "AngerMOD-1D-SZW8R3T0X6",
+    "AngerMOD-1D-B7AB5AOQKW",
+    "AngerMOD-1D-D891IAITXA",
+    "AngerMOD-1D-78JK75TPOX",
+    "AngerMOD-1D-87GKQ3C9DN",
+    "AngerMOD-1D-NNBK18N25D",
+    "AngerMOD-1D-RV3SXNFYNF",
+    "AngerMOD-1D-8RSW9NCPDG",
+    "AngerMOD-1D-JMFGN6GQG6",
+    "AngerMOD-1D-PNJV3KYFSN",
+    "AngerMOD-1D-IQKZWMBE00",
+    "AngerMOD-1D-2P5H8RSRS2",
+    "AngerMOD-1D-IUDXPJL32D",
+    "AngerMOD-1D-N949EIV0YS",
+    "AngerMOD-1D-8JLQM7H6BG",
+    "AngerMOD-1D-WS8XY903SM",
+    "AngerMOD-1D-56LX0D7FVA",
+    "AngerMOD-1D-OL1I8ROFA4",
+    "AngerMOD-1D-FXNSHEWJUA",
+    "AngerMOD-1D-KF9TW8LPTG",
+    "AngerMOD-1D-SQAM6P99QU",
+    "AngerMOD-1D-ZH05NNDATJ",
+    "AngerMOD-1D-F8OHI8E52X",
+    "AngerMOD-1D-BEJSTN8LVY",
+    "AngerMOD-1D-D2HJUDBF2T",
+    "AngerMOD-1D-MWWE15FZFI",
+    "AngerMOD-1D-W5HMZ0CBDG",
+    "AngerMOD-1D-K41DHQU2CU",
+    "AngerMOD-1D-8S2P6WM2SF",
+    "AngerMOD-1D-XZ2O58RL6R",
+    "AngerMOD-1D-JGLPXA6XPJ",
+    "AngerMOD-1D-KC2TX9LUF2",
+    "AngerMOD-1D-FTK2785WNG",
+    "AngerMOD-1D-NAMKMF0H8X",
+    "AngerMOD-1D-42W19G1YZS",
+    "AngerMOD-1D-8KZIUCHLLX",
+    "AngerMOD-1D-F3XRGNOESX",
+    "AngerMOD-1D-686UKCCBUI",
+    "AngerMOD-1D-561HPP0QWC",
+    "AngerMOD-1D-OO30BRJ97E",
+    "AngerMOD-1D-DEJXYKIG9J",
+    "AngerMOD-1D-4UO8URQINY",
+    "AngerMOD-1D-FHUEUJPNSL",
+    "AngerMOD-1D-N2QZ4FO1QS",
+    "AngerMOD-1D-4K25WU5DEX",
+    "AngerMOD-1D-1DSKZTB2P1",
     }
-}
-
--- [[ GROQ MODELS ]] --
-local GroqModels = {
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile", 
-    "deepseek-r1-distill-llama-70b"
-}
-local CurrentModelIndex = 1
-
--- [[ THEME SYSTEM ]] --
-local Themes = { "RGB", "БЕЛЫЙ", "СЕРЫЙ", "ГОЛУБОЙ", "ФИОЛЕТОВЫЙ", "НЕОБЫЧНЫЙ", "РОЗОВЫЙ", "КРАСНЫЙ" }
-local ThemeColors = {
-    ["БЕЛЫЙ"] = Color3.new(1, 1, 1), ["СЕРЫЙ"] = Color3.fromRGB(120, 120, 120),
-    ["ГОЛУБОЙ"] = Color3.fromRGB(0, 190, 255), ["ФИОЛЕТОВЫЙ"] = Color3.fromRGB(170, 0, 255),
-    ["НЕОБЫЧНЫЙ"] = Color3.fromRGB(255, 170, 0), ["РОЗОВЫЙ"] = Color3.fromRGB(255, 105, 180),
-    ["КРАСНЫЙ"] = Color3.fromRGB(255, 0, 0)
-}
-local CurrentThemeIndex = 1 
-
--- [[ MUSIC SYSTEM ]] --
-local CurrentSound = nil
-local MusicPlaying = false
-
--- [[ 1. GUI SETUP ]] --
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AngerGUI_V127"
-ScreenGui.ResetOnSpawn = false 
-
-if Player:FindFirstChild("PlayerGui") then
-    ScreenGui.Parent = Player.PlayerGui
-else
-    ScreenGui.Parent = game:GetService("CoreGui")
-end
-
--- DEATH SCREEN
-local DeathScreen = Instance.new("ScreenGui", ScreenGui.Parent)
-DeathScreen.Name = "AngerDeath"; DeathScreen.Enabled = false
-local DeathLabel = Instance.new("TextLabel", DeathScreen); DeathLabel.Size = UDim2.new(1, 0, 1, 0); DeathLabel.BackgroundTransparency = 1; DeathLabel.Text = "WASTED"; DeathLabel.Font = Enum.Font.Creepster; DeathLabel.TextSize = 100; DeathLabel.TextColor3 = Color3.fromRGB(255, 0, 0); DeathLabel.TextStrokeTransparency = 0
-
--- LISTS & VARS
-local RGB_Objects = {} 
-local Movable_Objects = {} 
-local RecordedPath = {}
-local UI_Unlocked = false 
-local ESPLines = {}
-
-local function style(obj, radius, thickness)
-    local uiC = Instance.new("UICorner", obj); uiC.CornerRadius = UDim.new(0, radius or 6)
-    local uiS = Instance.new("UIStroke", obj); uiS.Color = Color3.fromRGB(60, 60, 60); uiS.Thickness = thickness or 1
-    table.insert(RGB_Objects, {Type = "Stroke", Instance = uiS})
-    return uiS
-end
-
--- [[ NOTIFICATION SYSTEM ]] --
-local NotifyContainer = Instance.new("Frame", ScreenGui)
-NotifyContainer.Size = UDim2.new(0, 250, 0.4, 0)
-NotifyContainer.Position = UDim2.new(1, -260, 0.55, 0)
-NotifyContainer.BackgroundTransparency = 1
-local NotifyLayout = Instance.new("UIListLayout", NotifyContainer)
-NotifyLayout.SortOrder = Enum.SortOrder.LayoutOrder
-NotifyLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-NotifyLayout.Padding = UDim.new(0, 5)
-
-local function Notify(text)
-    local f = Instance.new("Frame", NotifyContainer)
-    f.Size = UDim2.new(1, 0, 0, 35)
-    f.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    f.BackgroundTransparency = 0.2
-    style(f, 4, 1)
-    
-    local l = Instance.new("TextLabel", f)
-    l.Size = UDim2.new(1, -10, 1, 0)
-    l.Position = UDim2.new(0, 5, 0, 0)
-    l.BackgroundTransparency = 1
-    l.Text = text
-    l.TextColor3 = Color3.new(1, 1, 1)
-    l.Font = Enum.Font.SciFi
-    l.TextSize = 14
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    
-    f.BackgroundTransparency = 1
-    l.TextTransparency = 1
-    TweenService:Create(f, TweenInfo.new(0.3), {BackgroundTransparency = 0.2}):Play()
-    TweenService:Create(l, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
-    
-    task.delay(3, function()
-        TweenService:Create(f, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(l, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-        task.wait(0.5)
-        f:Destroy()
-    end)
-end
-
--- // MUSIC WIDGET // --
-local MusicWidget = Instance.new("Frame", ScreenGui)
-MusicWidget.Size = UDim2.new(0, 200, 0, 120)
-MusicWidget.Position = UDim2.new(1, -210, 1, -130)
-MusicWidget.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MusicWidget.Visible = false
-MusicWidget.Active = true
-MusicWidget.Draggable = true
-style(MusicWidget, 8, 2)
-table.insert(Movable_Objects, MusicWidget)
-
-local MusicIcon = Instance.new("ImageLabel", MusicWidget)
-MusicIcon.Size = UDim2.new(0, 50, 0, 50)
-MusicIcon.Position = UDim2.new(0, 10, 0, 10)
-MusicIcon.BackgroundTransparency = 1
-MusicIcon.Image = "rbxassetid://6031265976"
-table.insert(RGB_Objects, {Type = "Image", Instance = MusicIcon})
-
-local MusicTitle = Instance.new("TextLabel", MusicWidget)
-MusicTitle.Size = UDim2.new(1, -70, 0, 25)
-MusicTitle.Position = UDim2.new(0, 65, 0, 10)
-MusicTitle.BackgroundTransparency = 1
-MusicTitle.Text = "NO MUSIC"
-MusicTitle.TextColor3 = Color3.new(1, 1, 1)
-MusicTitle.Font = Enum.Font.SciFi
-MusicTitle.TextSize = 14
-MusicTitle.TextXAlignment = Enum.TextXAlignment.Left
-MusicTitle.TextScaled = true
-
-local MusicStatus = Instance.new("TextLabel", MusicWidget)
-MusicStatus.Size = UDim2.new(1, -70, 0, 20)
-MusicStatus.Position = UDim2.new(0, 65, 0, 35)
-MusicStatus.BackgroundTransparency = 1
-MusicStatus.Text = "IDLE"
-MusicStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
-MusicStatus.Font = Enum.Font.SciFi
-MusicStatus.TextSize = 12
-MusicStatus.TextXAlignment = Enum.TextXAlignment.Left
-
-local BtnPlayPause = Instance.new("TextButton", MusicWidget)
-BtnPlayPause.Size = UDim2.new(0.3, -5, 0, 30)
-BtnPlayPause.Position = UDim2.new(0, 10, 1, -40)
-BtnPlayPause.Text = "PLAY"
-BtnPlayPause.BackgroundColor3 = Color3.fromRGB(20, 40, 20)
-BtnPlayPause.TextColor3 = Color3.new(1, 1, 1)
-BtnPlayPause.Font = Enum.Font.SciFi
-BtnPlayPause.TextSize = 12
-style(BtnPlayPause)
-
-local BtnStop = Instance.new("TextButton", MusicWidget)
-BtnStop.Size = UDim2.new(0.3, -5, 0, 30)
-BtnStop.Position = UDim2.new(0.35, 0, 1, -40)
-BtnStop.Text = "STOP"
-BtnStop.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
-BtnStop.TextColor3 = Color3.new(1, 1, 1)
-BtnStop.Font = Enum.Font.SciFi
-BtnStop.TextSize = 12
-style(BtnStop)
-
-local BtnSkip = Instance.new("TextButton", MusicWidget)
-BtnSkip.Size = UDim2.new(0.3, -5, 0, 30)
-BtnSkip.Position = UDim2.new(0.7, 0, 1, -40)
-BtnSkip.Text = "SKIP"
-BtnSkip.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
-BtnSkip.TextColor3 = Color3.new(1, 1, 1)
-BtnSkip.Font = Enum.Font.SciFi
-BtnSkip.TextSize = 12
-style(BtnSkip)
-
--- // MAIN MENU // --
-local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 480, 0, 550); Main.Position = UDim2.new(0.1, 0, 0.2, 0); Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10); Main.Visible = true; Main.Active = true; Main.Draggable = true; style(Main, 8, 2); table.insert(Movable_Objects, Main)
-
--- TABS
-local TabFrame = Instance.new("Frame", Main); TabFrame.Size = UDim2.new(1, -20, 0, 30); TabFrame.Position = UDim2.new(0, 10, 0, 50); TabFrame.BackgroundTransparency = 1
-local layoutTabs = Instance.new("UIListLayout", TabFrame); layoutTabs.FillDirection=Enum.FillDirection.Horizontal; layoutTabs.Padding=UDim.new(0,5)
-
-local function MakeTab(text)
-    local b = Instance.new("TextButton", TabFrame); b.Size=UDim2.new(0.16,0,1,0); b.BackgroundColor3=Color3.fromRGB(20,20,20); b.Text=text; b.TextColor3=Color3.new(1,1,1); b.Font=Enum.Font.SciFi; style(b); b.TextScaled = true
-    return b
-end
-local btnTabMain = MakeTab("MAIN"); local btnTabInfo = MakeTab("INFO"); local btnTabAI = MakeTab("AI"); local btnTabWorld = MakeTab("WORLD"); local btnTabUI = MakeTab("UI"); local btnTabMusic = MakeTab("MUSIC")
-
--- TITLE
-local Title = Instance.new("TextLabel", Main); Title.Size=UDim2.new(1,0,0,45); Title.BackgroundTransparency=1; Title.Text="AngerPC V127 (GROQ+MUSIC)"; Title.Font=Enum.Font.SciFi; Title.TextSize=24; Title.TextColor3=Color3.new(1,1,1); table.insert(RGB_Objects, {Type="Text", Instance=Title})
-
--- // PAGES // --
-local PageMain = Instance.new("ScrollingFrame", Main); PageMain.Size=UDim2.new(1,-20,0.78,0); PageMain.Position=UDim2.new(0,10,0.18,0); PageMain.BackgroundTransparency=1; PageMain.ScrollBarThickness=2; PageMain.Visible=true; Instance.new("UIListLayout", PageMain).Padding=UDim.new(0,8)
-local PageInfo = Instance.new("Frame", Main); PageInfo.Size=UDim2.new(1,-20,0.78,0); PageInfo.Position=UDim2.new(0,10,0.18,0); PageInfo.BackgroundTransparency=1; PageInfo.Visible=false
-local PageAI = Instance.new("Frame", Main); PageAI.Size=UDim2.new(1,-20,0.78,0); PageAI.Position=UDim2.new(0,10,0.18,0); PageAI.BackgroundTransparency=1; PageAI.Visible=false
-local PageWorld = Instance.new("Frame", Main); PageWorld.Size=UDim2.new(1,-20,0.78,0); PageWorld.Position=UDim2.new(0,10,0.18,0); PageWorld.BackgroundTransparency=1; PageWorld.Visible=false
-local PageUI = Instance.new("Frame", Main); PageUI.Size=UDim2.new(1,-20,0.78,0); PageUI.Position=UDim2.new(0,10,0.18,0); PageUI.BackgroundTransparency=1; PageUI.Visible=false
-local PageMusic = Instance.new("ScrollingFrame", Main); PageMusic.Size=UDim2.new(1,-20,0.78,0); PageMusic.Position=UDim2.new(0,10,0.18,0); PageMusic.BackgroundTransparency=1; PageMusic.ScrollBarThickness=2; PageMusic.Visible=false; Instance.new("UIListLayout", PageMusic).Padding=UDim.new(0,8)
-
-btnTabMain.MouseButton1Click:Connect(function() PageMain.Visible=true; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
-btnTabInfo.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=true; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
-btnTabAI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=true; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=false end)
-btnTabWorld.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=true; PageUI.Visible=false; PageMusic.Visible=false end)
-btnTabUI.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=true; PageMusic.Visible=false end)
-btnTabMusic.MouseButton1Click:Connect(function() PageMain.Visible=false; PageInfo.Visible=false; PageAI.Visible=false; PageWorld.Visible=false; PageUI.Visible=false; PageMusic.Visible=true end)
-
--- INFO PAGE
-local InfoLabel = Instance.new("TextLabel", PageInfo); InfoLabel.Size = UDim2.new(1,0,1,0); InfoLabel.BackgroundTransparency = 1; InfoLabel.TextColor3 = Color3.new(1,1,1); InfoLabel.TextSize = 18; InfoLabel.TextYAlignment = Enum.TextYAlignment.Top; InfoLabel.Text = "Loading stats..."
-
--- // WORLD PAGE // --
-local FogBtn = Instance.new("TextButton", PageWorld); FogBtn.Size = UDim2.new(1, 0, 0, 40); FogBtn.Position=UDim2.new(0,0,0,0); FogBtn.Text = "REMOVE FOG: OFF"; FogBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FogBtn.TextColor3 = Color3.new(1, 1, 1); style(FogBtn)
-local AmbientBtn = Instance.new("TextButton", PageWorld); AmbientBtn.Size = UDim2.new(1, 0, 0, 40); AmbientBtn.Position=UDim2.new(0,0,0.1,0); AmbientBtn.Text = "AMBIENT SYNC: OFF"; AmbientBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AmbientBtn.TextColor3 = Color3.new(1, 1, 1); style(AmbientBtn)
-local SkyBox = Instance.new("TextBox", PageWorld); SkyBox.Size = UDim2.new(1, 0, 0, 40); SkyBox.Position=UDim2.new(0,0,0.25,0); SkyBox.PlaceholderText = "CUSTOM SKY ID"; SkyBox.Text = ""; SkyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); SkyBox.TextColor3 = Color3.new(1, 1, 1); style(SkyBox)
-local SetSkyBtn = Instance.new("TextButton", PageWorld); SetSkyBtn.Size = UDim2.new(1, 0, 0, 40); SetSkyBtn.Position=UDim2.new(0,0,0.35,0); SetSkyBtn.Text = "APPLY CUSTOM SKY"; SetSkyBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); SetSkyBtn.TextColor3 = Color3.new(1, 1, 1); style(SetSkyBtn)
-local SpaceSkyBtn = Instance.new("TextButton", PageWorld); SpaceSkyBtn.Size = UDim2.new(1, 0, 0, 40); SpaceSkyBtn.Position=UDim2.new(0,0,0.45,0); SpaceSkyBtn.Text = "SET SPACE SKY"; SpaceSkyBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 40); SpaceSkyBtn.TextColor3 = Color3.new(1, 1, 1); style(SpaceSkyBtn)
-
--- // AI PAGE // --
-local AIKeyBox = Instance.new("TextBox", PageAI); AIKeyBox.Size = UDim2.new(1, 0, 0, 40); AIKeyBox.Position = UDim2.new(0,0,0,0); AIKeyBox.PlaceholderText = "GROQ API KEY"; AIKeyBox.Text = ""; AIKeyBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); AIKeyBox.TextColor3 = Color3.new(1, 1, 1); style(AIKeyBox)
-
-local ModelBtn = Instance.new("TextButton", PageAI); ModelBtn.Size = UDim2.new(1, 0, 0, 40); ModelBtn.Position = UDim2.new(0, 0, 0.09, 0); ModelBtn.Text = "MODEL: " .. GroqModels[CurrentModelIndex]; ModelBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); ModelBtn.TextColor3 = Color3.new(1, 1, 1); ModelBtn.Font = Enum.Font.SciFi; ModelBtn.TextSize = 14; style(ModelBtn)
-
-local AIToggleBtn = Instance.new("TextButton", PageAI); AIToggleBtn.Size = UDim2.new(1, 0, 0, 40); AIToggleBtn.Position = UDim2.new(0, 0, 0.19, 0); AIToggleBtn.Text = "AI AUTOREPLY: OFF"; AIToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); AIToggleBtn.TextColor3 = Color3.new(1, 1, 1); style(AIToggleBtn)
-local FriendBtn = Instance.new("TextButton", PageAI); FriendBtn.Size = UDim2.new(1, 0, 0, 40); FriendBtn.Position = UDim2.new(0, 0, 0.29, 0); FriendBtn.Text = "FRIEND BOT: OFF"; FriendBtn.BackgroundColor3 = Color3.fromRGB(30, 10, 10); FriendBtn.TextColor3 = Color3.new(1, 1, 1); style(FriendBtn)
-local RecBtn = Instance.new("TextButton", PageAI); RecBtn.Size = UDim2.new(0.48, 0, 0, 40); RecBtn.Position = UDim2.new(0, 0, 0.49, 0); RecBtn.Text = "RECORD"; RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); RecBtn.TextColor3 = Color3.new(1, 1, 1); style(RecBtn)
-local PlayBtn = Instance.new("TextButton", PageAI); PlayBtn.Size = UDim2.new(0.48, 0, 0, 40); PlayBtn.Position = UDim2.new(0.52, 0, 0.49, 0); PlayBtn.Text = "PLAY"; PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10); PlayBtn.TextColor3 = Color3.new(1, 1, 1); style(PlayBtn)
-local LoopBtn = Instance.new("TextButton", PageAI); LoopBtn.Size = UDim2.new(1, 0, 0, 40); LoopBtn.Position = UDim2.new(0, 0, 0.59, 0); LoopBtn.Text = "LOOP PLAYBACK: OFF"; LoopBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); LoopBtn.TextColor3 = Color3.new(1, 1, 1); style(LoopBtn)
-local AIStatus = Instance.new("TextLabel", PageAI); AIStatus.Size = UDim2.new(1, 0, 0, 30); AIStatus.Position = UDim2.new(0, 0, 0.71, 0); AIStatus.BackgroundTransparency = 1; AIStatus.Text = "STATUS: IDLE"; AIStatus.TextColor3 = Color3.fromRGB(150, 150, 150); style(AIStatus, 0, 0)
-
--- // UI PAGE // --
-local UnlockBtn = Instance.new("TextButton", PageUI); UnlockBtn.Size = UDim2.new(1, 0, 0, 40); UnlockBtn.Position = UDim2.new(0,0,0,0); UnlockBtn.Text = "UNLOCK MOVING: OFF"; UnlockBtn.BackgroundColor3 = Color3.fromRGB(30,10,10); UnlockBtn.TextColor3 = Color3.new(1,1,1); style(UnlockBtn)
-local SaveBtn = Instance.new("TextButton", PageUI); SaveBtn.Size = UDim2.new(1, 0, 0, 40); SaveBtn.Position = UDim2.new(0,0,0.12,0); SaveBtn.Text = "SAVE CONFIG"; SaveBtn.BackgroundColor3 = Color3.fromRGB(20,20,40); SaveBtn.TextColor3 = Color3.new(1,1,1); style(SaveBtn)
-
--- // MUSIC PAGE // --
-local MusicIDBox = Instance.new("TextBox", PageMusic); MusicIDBox.Size = UDim2.new(1, 0, 0, 40); MusicIDBox.PlaceholderText = "ROBLOX AUDIO ID"; MusicIDBox.Text = ""; MusicIDBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); MusicIDBox.TextColor3 = Color3.new(1, 1, 1); MusicIDBox.Font = Enum.Font.SciFi; MusicIDBox.TextSize = 16; style(MusicIDBox)
-
-local PlayIDBtn = Instance.new("TextButton", PageMusic); PlayIDBtn.Size = UDim2.new(1, 0, 0, 40); PlayIDBtn.Text = "▶ PLAY BY ID"; PlayIDBtn.BackgroundColor3 = Color3.fromRGB(20, 40, 20); PlayIDBtn.TextColor3 = Color3.new(1, 1, 1); PlayIDBtn.Font = Enum.Font.SciFi; PlayIDBtn.TextSize = 16; style(PlayIDBtn)
-
-local YouTubeLinkBox = Instance.new("TextBox", PageMusic); YouTubeLinkBox.Size = UDim2.new(1, 0, 0, 40); YouTubeLinkBox.PlaceholderText = "YOUTUBE LINK OR VIDEO ID"; YouTubeLinkBox.Text = ""; YouTubeLinkBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); YouTubeLinkBox.TextColor3 = Color3.new(1, 1, 1); YouTubeLinkBox.Font = Enum.Font.SciFi; YouTubeLinkBox.TextSize = 16; style(YouTubeLinkBox)
-
-local PlayYTBtn = Instance.new("TextButton", PageMusic); PlayYTBtn.Size = UDim2.new(1, 0, 0, 40); PlayYTBtn.Text = "🎵 PLAY FROM YOUTUBE"; PlayYTBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 20); PlayYTBtn.TextColor3 = Color3.new(1, 1, 1); PlayYTBtn.Font = Enum.Font.SciFi; PlayYTBtn.TextSize = 16; style(PlayYTBtn)
-
-local SearchBox = Instance.new("TextBox", PageMusic); SearchBox.Size = UDim2.new(1, 0, 0, 40); SearchBox.PlaceholderText = "SEARCH MUSIC NAME"; SearchBox.Text = ""; SearchBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20); SearchBox.TextColor3 = Color3.new(1, 1, 1); SearchBox.Font = Enum.Font.SciFi; SearchBox.TextSize = 16; style(SearchBox)
-
-local SearchBtn = Instance.new("TextButton", PageMusic); SearchBtn.Size = UDim2.new(1, 0, 0, 40); SearchBtn.Text = "🔍 SEARCH MUSIC"; SearchBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 40); SearchBtn.TextColor3 = Color3.new(1, 1, 1); SearchBtn.Font = Enum.Font.SciFi; SearchBtn.TextSize = 16; style(SearchBtn)
-
-local StopMusicBtn = Instance.new("TextButton", PageMusic); StopMusicBtn.Size = UDim2.new(1, 0, 0, 40); StopMusicBtn.Text = "⏹ STOP MUSIC"; StopMusicBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10); StopMusicBtn.TextColor3 = Color3.new(1, 1, 1); StopMusicBtn.Font = Enum.Font.SciFi; StopMusicBtn.TextSize = 16; style(StopMusicBtn)
-
-local VolumeSlider = Instance.new("TextBox", PageMusic); VolumeSlider.Size = UDim2.new(1, 0, 0, 40); VolumeSlider.PlaceholderText = "VOLUME (0-10)"; VolumeSlider.Text = "5"; VolumeSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 20); VolumeSlider.TextColor3 = Color3.new(1, 1, 1); VolumeSlider.Font = Enum.Font.SciFi; VolumeSlider.TextSize = 16; style(VolumeSlider)
-
--- FLY BUTTONS
-local btnUp = Instance.new("TextButton", PageWorld); btnUp.Size = UDim2.new(0.45, 0, 0, 40); btnUp.Position = UDim2.new(0, 0, 0.6, 0); btnUp.Text = "FLY UP"; btnUp.BackgroundColor3 = Color3.fromRGB(20,20,20); btnUp.TextColor3 = Color3.new(1,1,1); style(btnUp)
-local btnDn = Instance.new("TextButton", PageWorld); btnDn.Size = UDim2.new(0.45, 0, 0, 40); btnDn.Position = UDim2.new(0.5, 0, 0.6, 0); btnDn.Text = "FLY DOWN"; btnDn.BackgroundColor3 = Color3.fromRGB(20,20,20); btnDn.TextColor3 = Color3.new(1,1,1); style(btnDn)
-
-local SideBtn = Instance.new("TextButton", ScreenGui); SideBtn.Name = "ToggleMenu"; SideBtn.Size = UDim2.new(0, 50, 0, 50); SideBtn.Position = UDim2.new(0, 10, 0.5, 0); SideBtn.Text = "O/C"; SideBtn.BackgroundColor3 = Color3.fromRGB(20,20,20); SideBtn.TextColor3 = Color3.new(1,1,1); style(SideBtn, 16); table.insert(Movable_Objects, SideBtn)
-
--- [[ 2. LOGIC ]] --
-local States = { 
-    Watermark = true, Aim = false, Hitbox = false, AntiKnockback = false, UnlockAll = false,
-    SpdBypass = false, Fly = false, Spd = false, Jump = false, Circle = false, UsePentagram = false,
-    Ghosts = false, Esp = false, RGB = false, Fullbright = false, InfJump = false, AntiAfk = true,
-    NoFog = false, AmbientSync = false, AI = false, FriendBot = false, IsFollowing = true, 
-    IsRecording = false, IsPlaying = false, LoopPlay = false, KillAura = false
-} 
-local valSmooth, valHitbox, valFlySpeed, valSpeed, valBypassSpeed, valJumpPower, valRipple, valGhostRate = 0.15, 5, 5, 50, 0.11, 100, 15, 0.05
-local up, down = false, false
-
-local function EmergencyBrake()
-    local char = Player.Character; if char and char:FindFirstChild("HumanoidRootPart") then char.HumanoidRootPart.Velocity = Vector3.new(0,0,0); char.HumanoidRootPart.RotVelocity = Vector3.new(0,0,0) end
-end
-
--- [[ MUSIC FUNCTIONS ]] --
-local function PlayMusic(audioId, title)
-    if CurrentSound then 
-        CurrentSound:Stop()
-        CurrentSound:Destroy()
-        CurrentSound = nil 
-    end
-    
-    local char = Player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then
-        Notify("ERROR: NO CHARACTER")
-        return
-    end
-    
-    CurrentSound = Instance.new("Sound")
-    CurrentSound.Parent = char.HumanoidRootPart
-    CurrentSound.SoundId = "rbxassetid://" .. tostring(audioId)
-    CurrentSound.Volume = tonumber(VolumeSlider.Text) or 5
-    CurrentSound.Looped = true
-    CurrentSound.Playing = true
-    
-    local success = pcall(function()
-        CurrentSound:Play()
-    end)
-    
-    if success then
-        MusicPlaying = true
-        MusicTitle.Text = title or ("ID: " .. tostring(audioId))
-        MusicStatus.Text = "♪ PLAYING"
-        MusicWidget.Visible = true
-        BtnPlayPause.Text = "⏸"
-        Notify("MUSIC: " .. (title or tostring(audioId)))
-    else
-        Notify("ERROR: INVALID AUDIO ID")
-        if CurrentSound then
-            CurrentSound:Destroy()
-            CurrentSound = nil
-        end
-    end
-end
-
-local function StopMusic()
-    if CurrentSound then 
-        CurrentSound:Stop()
-        CurrentSound:Destroy()
-        CurrentSound = nil 
-    end
-    MusicPlaying = false
-    MusicTitle.Text = "NO MUSIC"
-    MusicStatus.Text = "⏹ STOPPED"
-    BtnPlayPause.Text = "▶"
-    Notify("MUSIC STOPPED")
-end
-
-local function TogglePlayPause()
-    if not CurrentSound then return end
-    if MusicPlaying then
-        CurrentSound:Pause()
-        MusicPlaying = false
-        MusicStatus.Text = "⏸ PAUSED"
-        BtnPlayPause.Text = "▶"
-    else
-        CurrentSound:Resume()
-        MusicPlaying = true
-        MusicStatus.Text = "♪ PLAYING"
-        BtnPlayPause.Text = "⏸"
-    end
-end
-
-local function ExtractYouTubeID(link)
-    local patterns = {
-        "youtube%.com/watch%?v=([%w-_]+)",
-        "youtu%.be/([%w-_]+)",
-        "youtube%.com/embed/([%w-_]+)",
-        "youtube%.com/v/([%w-_]+)"
-    }
-    
-    for _, pattern in ipairs(patterns) do
-        local id = string.match(link, pattern)
-        if id then return id end
-    end
-    
-    if string.match(link, "^[%w-_]+$") and #link == 11 then
-        return link
-    end
-    
-    return nil
-end
-
-local function SearchYouTubeToRoblox(query)
-    Notify("SEARCHING: " .. query)
-    task.spawn(function()
-        if request then
-            local success, response = pcall(function()
-                return request({
-                    Url = "https://www.roblox.com/audio/search?Keyword=" .. HttpService:UrlEncode(query),
-                    Method = "GET"
-                })
-            end)
-            
-            if success and response and response.Body then
-                local audioId = string.match(response.Body, 'data%-item%-id="(%d+)"')
-                if audioId then
-                    PlayMusic(audioId, query)
-                else
-                    Notify("NO RESULTS FOUND")
-                end
-            else
-                Notify("SEARCH FAILED")
-            end
-        else
-            Notify("HTTP NOT AVAILABLE")
-        end
-    end)
-end
-
-PlayIDBtn.MouseButton1Click:Connect(function()
-    local id = MusicIDBox.Text:gsub("%s+", "")
-    if id ~= "" then
-        local numericId = id:match("%d+")
-        if numericId then
-            PlayMusic(numericId, "Custom Audio")
-        else
-            Notify("INVALID ID FORMAT")
-        end
-    else
-        Notify("ENTER AUDIO ID")
-    end
-end)
-
-PlayYTBtn.MouseButton1Click:Connect(function()
-    local link = YouTubeLinkBox.Text:gsub("%s+", "")
-    if link ~= "" then
-        local ytId = ExtractYouTubeID(link)
-        if ytId then
-            Notify("YT ID: " .. ytId)
-            SearchYouTubeToRoblox(ytId)
-        else
-            Notify("INVALID YOUTUBE LINK")
-        end
-    else
-        Notify("ENTER YOUTUBE LINK")
-    end
-end)
-
-SearchBtn.MouseButton1Click:Connect(function()
-    local query = SearchBox.Text:gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
-    if query ~= "" then
-        SearchYouTubeToRoblox(query)
-    else
-        Notify("ENTER SEARCH QUERY")
-    end
-end)
-
-StopMusicBtn.MouseButton1Click:Connect(function() 
-    StopMusic() 
-end)
-
-BtnPlayPause.MouseButton1Click:Connect(function() 
-    TogglePlayPause() 
-end)
-
-BtnStop.MouseButton1Click:Connect(function() 
-    StopMusic() 
-end)
-
-BtnSkip.MouseButton1Click:Connect(function()
-    if CurrentSound then
-        CurrentSound.TimePosition = 0
-        Notify("MUSIC RESTARTED")
-    end
-end)
-
-VolumeSlider.FocusLost:Connect(function()
-    local vol = tonumber(VolumeSlider.Text)
-    if vol then
-        vol = math.clamp(vol, 0, 10)
-        VolumeSlider.Text = tostring(vol)
-        if CurrentSound then
-            CurrentSound.Volume = vol
-            Notify("VOLUME: " .. tostring(vol))
-        end
-    else
-        VolumeSlider.Text = "5"
-    end
-end)
-
--- [[ FIXED REPLAY MOVEMENT ]] --
-local function SmartMove(targetCF)
-    local char = Player.Character; if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    local hum = char:FindFirstChild("Humanoid")
-    if not root or not hum then return end
-    
-    local car = nil; if hum.SeatPart then car = hum.SeatPart.Parent end
-    if car and car:IsA("Model") then 
-        local mainPart = car.PrimaryPart or hum.SeatPart
-        mainPart.Velocity = Vector3.new(0,0,0)
-        mainPart.CFrame = targetCF 
-    else 
-        root.CFrame = targetCF
-        root.Velocity = Vector3.new(0,0,0)
-    end
-end
-
-local function SendChat(msg)
-    if game:GetService("TextChatService").ChatVersion == Enum.ChatVersion.TextChatService then
-        pcall(function() game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync(msg) end)
-    else
-        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
-    end
-end
-
-btnUp.MouseButton1Down:Connect(function() up = true end); btnUp.MouseButton1Up:Connect(function() up = false end)
-btnDn.MouseButton1Down:Connect(function() down = true end); btnDn.MouseButton1Up:Connect(function() down = false end)
-
-local function makeBind(name, callback)
-    local hb = Instance.new("TextButton", ScreenGui); hb.Name="Bind_"..name; hb.Size=UDim2.new(0,50,0,50); hb.Position=UDim2.new(0.85,0,0.4,0); hb.BackgroundColor3=Color3.fromRGB(15,15,15); hb.Text=name:sub(1,3); hb.TextColor3=Color3.new(1,1,1); hb.Visible=false
-    hb.Active = UI_Unlocked; hb.Draggable = UI_Unlocked
-    style(hb,25); hb.MouseButton1Click:Connect(callback); table.insert(Movable_Objects, hb); return hb
-end
-
-local btnTheme = Instance.new("TextButton", PageMain); btnTheme.Size = UDim2.new(1, 0, 0, 40); btnTheme.BackgroundColor3 = Color3.fromRGB(25, 25, 25); btnTheme.Text = "THEME: " .. Themes[CurrentThemeIndex]; btnTheme.TextColor3 = Color3.new(1,1,1); btnTheme.Font = Enum.Font.SciFi; btnTheme.TextSize = 16; style(btnTheme)
-btnTheme.MouseButton1Click:Connect(function() CurrentThemeIndex = CurrentThemeIndex + 1; if CurrentThemeIndex > #Themes then CurrentThemeIndex = 1 end; btnTheme.Text = "THEME: " .. Themes[CurrentThemeIndex] end)
-
-ModelBtn.MouseButton1Click:Connect(function()
-    CurrentModelIndex = CurrentModelIndex + 1
-    if CurrentModelIndex > #GroqModels then CurrentModelIndex = 1 end
-    ModelBtn.Text = "MODEL: " .. GroqModels[CurrentModelIndex]
-end)
-
-local function addOption(name, key, useInput, defaultInputVal, inputCallback)
-    local f = Instance.new("Frame", PageMain); f.Size = UDim2.new(1, 0, 0, 40); f.BackgroundTransparency = 1
-    local btnSize = useInput and 0.5 or 0.75
-    local b = Instance.new("TextButton", f); b.Size = UDim2.new(btnSize, -5, 1, 0); b.Text = name; b.BackgroundColor3 = Color3.fromRGB(20, 20, 20); b.TextColor3 = Color3.new(1,1,1); style(b)
-    if States[key] then b.BackgroundColor3 = Color3.fromRGB(40, 40, 40) end
-    
-    local function Toggle()
-        States[key] = not States[key]
-        b.BackgroundColor3 = States[key] and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(20, 20, 20)
-        Notify(name .. (States[key] and " [ON]" or " [OFF]"))
-    end
-    
-    local hk = makeBind(name, Toggle)
-    b.MouseButton1Click:Connect(Toggle)
-    
-    local bb = Instance.new("TextButton", f); bb.Size = UDim2.new(0.25, 0, 1, 0); bb.Position = UDim2.new(0.75, 0, 0, 0); bb.Text = "BIND"; style(bb)
-    bb.MouseButton1Click:Connect(function() hk.Visible = not hk.Visible end)
-    
-    if useInput then
-        local inp = Instance.new("TextBox", f); inp.Size = UDim2.new(0.25, -5, 1, 0); inp.Position = UDim2.new(0.5, 0, 0, 0); inp.Text = tostring(defaultInputVal); inp.BackgroundColor3 = Color3.fromRGB(15,15,15); inp.TextColor3 = Color3.new(1,1,1); style(inp)
-        inp.FocusLost:Connect(function() local n = tonumber(inp.Text); if n then inputCallback(n) else inp.Text = tostring(defaultInputVal) end end)
-    end
-end
-
--- [ OPTIONS ] --
-addOption("SHOW LOGO", "Watermark", false) 
-addOption("HUMAN AIM", "Aim", true, valSmooth, function(v) valSmooth = math.clamp(v, 0.01, 1) end)
-addOption("ANTI KNOCKBACK", "AntiKnockback", false) 
-addOption("INF ZOOM", "UnlockAll", false) 
-addOption("SPEED BYPASS", "SpdBypass", true, valBypassSpeed, function(v) valBypassSpeed = v end)
-addOption("KILL AURA", "KillAura", false)
-addOption("BIG HITBOX", "Hitbox", true, valHitbox, function(v) valHitbox = v end)
-addOption("FLY BYPASS", "Fly", true, valFlySpeed, function(v) valFlySpeed = v end)
-addOption("RAGE SPEED", "Spd", true, valSpeed, function(v) valSpeed = v end)
-addOption("SUPER JUMP", "Jump", true, valJumpPower, function(v) valJumpPower = v end)
-addOption("JUMP RIPPLE", "Circle", true, valRipple, function(v) valRipple = v end)
-addOption("PENTAGRAM MODE", "UsePentagram", false) 
-addOption("GHOST TRAIL", "Ghosts", true, valGhostRate, function(v) valGhostRate = math.clamp(v, 0.01, 2) end) 
-addOption("ESP HIGHLIGHT", "Esp", false)
-addOption("SKIN COLOR", "RGB", false) 
-addOption("FULLBRIGHT", "Fullbright", false) 
-addOption("INF JUMP", "InfJump", false)
-
-SideBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
-
--- [[ UI EDITOR & SAVE ]] --
-UnlockBtn.MouseButton1Click:Connect(function()
-    UI_Unlocked = not UI_Unlocked
-    UnlockBtn.Text = UI_Unlocked and "UNLOCK MOVING: ON" or "UNLOCK MOVING: OFF"
-    UnlockBtn.BackgroundColor3 = UI_Unlocked and Color3.fromRGB(10,50,10) or Color3.fromRGB(30,10,10)
-    for _, obj in pairs(Movable_Objects) do obj.Active = UI_Unlocked; obj.Draggable = UI_Unlocked end
-end)
-local ConfigName = "AngerConfig_V127.json"
-SaveBtn.MouseButton1Click:Connect(function()
-    local data = {}; for _, obj in pairs(Movable_Objects) do data[obj.Name] = {X_S=obj.Position.X.Scale, X_O=obj.Position.X.Offset, Y_S=obj.Position.Y.Scale, Y_O=obj.Position.Y.Offset} end
-    if writefile then writefile(ConfigName, game:GetService("HttpService"):JSONEncode(data)); SaveBtn.Text="SAVED!"; task.wait(1); SaveBtn.Text="SAVE CONFIG" end
-end)
-task.spawn(function() if isfile and isfile(ConfigName) then local data = game:GetService("HttpService"):JSONDecode(readfile(ConfigName)); for _, obj in pairs(Movable_Objects) do if data[obj.Name] then obj.Position = UDim2.new(data[obj.Name].X_S, data[obj.Name].X_O, data[obj.Name].Y_S, data[obj.Name].Y_O) end end end end)
-
--- [[ WORLD FUNCTIONS ]] --
-FogBtn.MouseButton1Click:Connect(function()
-    States.NoFog = not States.NoFog
-    FogBtn.Text = States.NoFog and "REMOVE FOG: ON" or "REMOVE FOG: OFF"
-    FogBtn.BackgroundColor3 = States.NoFog and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
-    if not States.NoFog then Lighting.FogEnd = 1000 end
-    Notify("NO FOG" .. (States.NoFog and " [ON]" or " [OFF]"))
-end)
-AmbientBtn.MouseButton1Click:Connect(function()
-    States.AmbientSync = not States.AmbientSync
-    AmbientBtn.Text = States.AmbientSync and "AMBIENT SYNC: ON" or "AMBIENT SYNC: OFF"
-    AmbientBtn.BackgroundColor3 = States.AmbientSync and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
-    Notify("AMBIENT" .. (States.AmbientSync and " [ON]" or " [OFF]"))
-end)
-local function SetSky(id)
-    local sky = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky", Lighting)
-    local tex = "rbxassetid://" .. tostring(id)
-    sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp = tex, tex, tex, tex, tex, tex
-    Notify("CUSTOM SKY: " .. tostring(id))
-end
-SetSkyBtn.MouseButton1Click:Connect(function() 
-    local id = SkyBox.Text:gsub("%s+", ""):match("%d+")
-    if id then 
-        SetSky(id) 
-    else
-        Notify("INVALID SKY ID")
-    end
-end)
-SpaceSkyBtn.MouseButton1Click:Connect(function() SetSky("159454299") end) 
-
--- [[ MACRO LOGIC (FIXED) ]] --
-RecBtn.MouseButton1Click:Connect(function()
-    States.IsRecording = not States.IsRecording
-    if States.IsRecording then 
-        States.IsPlaying = false
-        RecordedPath = {} 
-        RecBtn.Text = "STOP REC"
-        RecBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        AIStatus.Text = "STATUS: RECORDING..."
-        Notify("RECORDING STARTED") 
-    else 
-        RecBtn.Text = "RECORD"
-        RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10)
-        AIStatus.Text = "STATUS: SAVED " .. #RecordedPath .. " FRAMES"
-        Notify("RECORDING STOPPED") 
-    end
-end)
-
-local function StartPlayback()
-    if #RecordedPath == 0 then AIStatus.Text = "ERROR: NO RECORDING"; States.IsPlaying = false; return end
-    
-    local char = Player.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChild("Humanoid")
-    if root and hum then
-        hum.PlatformStand = true
-        root.Anchored = true
-    end
-
-    task.spawn(function()
-        while States.IsPlaying do
-            for i, frame in ipairs(RecordedPath) do
-                if not States.IsPlaying then break end
-                SmartMove(frame.CF)
-                RunService.Heartbeat:Wait()
-            end
-            if not States.LoopPlay then 
-                States.IsPlaying = false
-                PlayBtn.Text = "PLAY"
-                PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
-                Notify("PLAYBACK ENDED")
-                break 
-            end
-        end
-        if Player.Character then
-            local r = Player.Character:FindFirstChild("HumanoidRootPart")
-            local h = Player.Character:FindFirstChild("Humanoid")
-            if r then r.Anchored = false r.Velocity = Vector3.zero end
-            if h then h.PlatformStand = false end
-        end
-        AIStatus.Text = "STATUS: IDLE"
-    end)
-end
-
-PlayBtn.MouseButton1Click:Connect(function()
-    States.IsPlaying = not States.IsPlaying
-    if States.IsPlaying then 
-        States.IsRecording = false
-        RecBtn.Text = "RECORD"
-        RecBtn.BackgroundColor3 = Color3.fromRGB(40, 10, 10)
-        PlayBtn.Text = "STOP PLAY"
-        PlayBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        Notify("PLAYBACK STARTED")
-        StartPlayback() 
-    else 
-        PlayBtn.Text = "PLAY"
-        PlayBtn.BackgroundColor3 = Color3.fromRGB(10, 40, 10)
-        EmergencyBrake()
-        Notify("PLAYBACK STOPPED") 
-    end
-end)
-
-LoopBtn.MouseButton1Click:Connect(function()
-    States.LoopPlay = not States.LoopPlay
-    LoopBtn.Text = States.LoopPlay and "LOOP PLAYBACK: ON" or "LOOP PLAYBACK: OFF"
-    LoopBtn.BackgroundColor3 = States.LoopPlay and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 30, 30)
-    Notify("LOOP" .. (States.LoopPlay and " [ON]" or " [OFF]"))
-end)
-
--- [[ AI LOGIC (GROQ) ]] --
-local AI_Debounce = false
-AIToggleBtn.MouseButton1Click:Connect(function() 
-    States.AI = not States.AI
-    AIToggleBtn.Text = States.AI and "AI AUTOREPLY: ON" or "AI AUTOREPLY: OFF"
-    AIToggleBtn.BackgroundColor3 = States.AI and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10)
-    Notify("AI CHAT" .. (States.AI and " [ON]" or " [OFF]"))
-    if States.AI then SendChat("AngerMOD: Модуль чата активен.") end
-end)
-FriendBtn.MouseButton1Click:Connect(function() 
-    States.FriendBot = not States.FriendBot
-    FriendBtn.Text = States.FriendBot and "FRIEND BOT: ON" or "FRIEND BOT: OFF"
-    FriendBtn.BackgroundColor3 = States.FriendBot and Color3.fromRGB(10, 50, 10) or Color3.fromRGB(30, 10, 10) 
-    Notify("FRIEND BOT" .. (States.FriendBot and " [ON]" or " [OFF]"))
-    if States.FriendBot then SendChat("Я теперь твой хвостик!") end
-end)
-
-local function ExecuteCommand(msg)
-    local m = string.lower(msg); local char = Player.Character; local hum = char and char:FindFirstChild("Humanoid")
-    if string.find(m, "сядь") then if hum then hum.Sit = true end; return true
-    elseif string.find(m, "встань") then if hum then hum.Sit = false; hum.Jump = true end; return true
-    elseif string.find(m, "стой") then States.IsFollowing = false; EmergencyBrake(); return true
-    elseif string.find(m, "ко мне") then States.IsFollowing = true; return true end
     return false
 end
 
-local function ProcessAI(msg, senderName)
-    if AI_Debounce then return end
-    if States.FriendBot and ExecuteCommand(msg) then return end 
-    if not States.AI then return end
-    AI_Debounce = true; AIStatus.Text = "STATUS: THINKING..."
-    local apiKey = AIKeyBox.Text; if apiKey == "" then AIStatus.Text = "ERROR: NO KEY"; AI_Debounce = false; return end
-    table.insert(ChatHistory, {role = "user", content = senderName .. ": " .. msg})
-    if #ChatHistory > 10 then table.remove(ChatHistory, 2) end
-    local success, response = pcall(function()
-        if request then return request({ 
-            Url = "https://api.groq.com/openai/v1/chat/completions", 
-            Method = "POST", 
-            Headers = {
-                ["Content-Type"] = "application/json", 
-                ["Authorization"] = "Bearer " .. apiKey
-            }, 
-            Body = HttpService:JSONEncode({ 
-                model = GroqModels[CurrentModelIndex], 
-                messages = ChatHistory, 
-                max_tokens = 60 
-            }) 
-        }) end
-    end)
-    if success and response and response.Body then 
-        local data = HttpService:JSONDecode(response.Body)
-        if data.choices and data.choices[1] then 
-            local reply = data.choices[1].message.content
-            SendChat(reply)
-            table.insert(ChatHistory, {role = "assistant", content = reply})
-            AIStatus.Text = "STATUS: REPLIED" 
-        else 
-            AIStatus.Text = "ERROR: API FAIL" 
+local keyFileLoaded = loadKeys()
+
+-- ══════════════════════════════════════════════════════
+--  СОСТОЯНИЕ ЧИТОВ
+-- ══════════════════════════════════════════════════════
+local Cheats = {
+    -- AIMBOT
+    Aimbot          = false,
+    AutoAim         = false,
+    SilentAim       = false,
+    AimFOV          = false,
+    AimFOVRadius    = 120,
+
+    -- VISUALS
+    ESPBoxes        = false,
+    EnemyNames      = false,
+    HealthBar       = false,
+    Radar           = false,
+
+    -- MOVEMENT
+    SpeedHack       = false,
+    SpeedValue      = 32,
+    InfiniteJump    = false,
+    NoClip          = false,
+    FlyMode         = false,
+
+    -- MISC
+    NoRecoil        = false,
+    AntiBan         = true,
+    AntiAFK         = true,
+}
+
+-- Состояние GUI
+local isLoggedIn    = false
+local isMinimized   = false
+local isDragging    = false
+local dragStart     = nil
+local startPos      = nil
+local activeTab     = "AIMBOT"
+
+-- Для cleanup
+local connections   = {}
+local espObjects    = {}
+local flyBodyForce  = nil
+local flyBodyGyro   = nil
+local originalSpeed = nil
+
+-- ══════════════════════════════════════════════════════
+--  ЦВЕТА
+-- ══════════════════════════════════════════════════════
+local C = {
+    GOLD        = Color3.fromRGB(218, 165, 32),
+    GOLD_DIM    = Color3.fromRGB(150, 110, 15),
+    BG          = Color3.fromRGB(8,   8,   8),
+    BG_TITLE    = Color3.fromRGB(4,   4,   4),
+    BG_ROW      = Color3.fromRGB(14,  14,  14),
+    BG_TAB      = Color3.fromRGB(18,  18,  18),
+    BG_ACTIVE   = Color3.fromRGB(25,  20,   5),
+    WHITE       = Color3.fromRGB(225, 225, 225),
+    GRAY        = Color3.fromRGB(120, 120, 120),
+    RED         = Color3.fromRGB(200,  40,  40),
+    GREEN       = Color3.fromRGB(30,  210,  80),
+    ON_COLOR    = Color3.fromRGB(218, 165,  32),
+    OFF_COLOR   = Color3.fromRGB(45,   45,  45),
+    BLACK       = Color3.fromRGB(0,    0,    0),
+}
+
+-- ══════════════════════════════════════════════════════
+--  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+-- ══════════════════════════════════════════════════════
+local function getChar()
+    return LocalPlayer.Character
+end
+
+local function getHRP()
+    local char = getChar()
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function getHum()
+    local char = getChar()
+    return char and char:FindFirstChildOfClass("Humanoid")
+end
+
+local function getEnemies()
+    local enemies = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(enemies, p)
         end
-    else 
-        AIStatus.Text = "ERROR: REQUEST FAIL" 
     end
-    task.wait(2); AI_Debounce = false; task.wait(1); AIStatus.Text = "STATUS: WAITING..."
-end
-for _, p in pairs(Players:GetPlayers()) do p.Chatted:Connect(function(msg) if p ~= Player then ProcessAI(msg, p.Name) end end) end
-Players.PlayerAdded:Connect(function(p) p.Chatted:Connect(function(msg) if p ~= Player then ProcessAI(msg, p.Name) end end) end)
-
--- [[ VISUALS ]] --
-local function SpawnRipple()
-    if not Player.Character or not Player.Character:FindFirstChild("HumanoidRootPart") then return end
-    local root = Player.Character.HumanoidRootPart; local ray = workspace:Raycast(root.Position, Vector3.new(0, -10, 0), RaycastParams.new())
-    local spawnPos = ray and ray.Position or (root.Position - Vector3.new(0, 2.8, 0)); local p = Instance.new("Part", workspace); p.Name = "AngerRipple"; p.Anchored = true; p.CanCollide = false
-    if States.UsePentagram then
-        p.Transparency = 1; p.Size = Vector3.new(1, 0.05, 1); p.CFrame = CFrame.new(spawnPos); local sg = Instance.new("SurfaceGui", p); sg.Face = Enum.NormalId.Top; sg.LightInfluence = 0; sg.AlwaysOnTop = false; local img = Instance.new("ImageLabel", sg); img.Size = UDim2.new(1, 0, 1, 0); img.BackgroundTransparency = 1; img.ImageColor3 = Color3.new(1, 1, 1); 
-        local s, a = pcall(function() return getcustomasset("Anger_Pentagram_Circle1.png") end)
-        if s then img.Image = a else img.Image = "rbxassetid://0" end; 
-        table.insert(RGB_Objects, {Type = "Image", Instance = img}); TweenService:Create(p, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(valRipple, 0.05, valRipple)}):Play(); TweenService:Create(img, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {ImageTransparency = 1}):Play(); Debris:AddItem(p, 1.5)
-    else
-        p.Shape = Enum.PartType.Cylinder; p.Material = Enum.Material.Neon; p.Size = Vector3.new(0.1, 1, 1); p.CFrame = CFrame.new(spawnPos) * CFrame.Angles(0, 0, math.rad(90)); p.Color = Color3.new(1,1,1); table.insert(RGB_Objects, {Type = "Part", Instance = p}); TweenService:Create(p, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = Vector3.new(0.1, valRipple, valRipple), Transparency = 1}):Play(); Debris:AddItem(p, 1)
-    end
+    return enemies
 end
 
-local function GetClosestPlayer()
-    local target = nil; local dist = math.huge
-    for _, v in pairs(Players:GetPlayers()) do 
-        if v ~= Player and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then 
-            local d = (v.Character.Head.Position - Camera.CFrame.Position).Magnitude
-            if d < dist then dist = d; target = v.Character end 
-        end 
-    end; return target
-end
+local function getClosestEnemy()
+    local closest, closestDist = nil, math.huge
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    local fov = Cheats.AimFOVRadius
 
-Player.CharacterAdded:Connect(function(char) 
-    DeathScreen.Enabled = false
-    char:WaitForChild("Humanoid").Died:Connect(function() DeathScreen.Enabled = true end)
-end)
-
--- [[ ESP LINES ]] --
-local function CreateESPLine(player)
-    if ESPLines[player] then return end
-    local line = Drawing.new("Line")
-    line.Visible = false
-    line.Color = Color3.new(1, 1, 1)
-    line.Thickness = 2
-    line.Transparency = 0.8
-    ESPLines[player] = line
-end
-
-local function UpdateESPLines(activeColor)
-    for player, line in pairs(ESPLines) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and States.Esp then
-            local char = player.Character
-            local rootPart = char.HumanoidRootPart
-            local vector, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-            
+    for _, p in ipairs(getEnemies()) do
+        local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
             if onScreen then
-                line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                line.To = Vector2.new(vector.X, vector.Y)
-                line.Color = activeColor
-                line.Visible = true
-            else
-                line.Visible = false
-            end
-        else
-            line.Visible = false
-        end
-    end
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= Player then CreateESPLine(player) end
-end
-
-Players.PlayerAdded:Connect(function(player)
-    CreateESPLine(player)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    if ESPLines[player] then
-        ESPLines[player]:Remove()
-        ESPLines[player] = nil
-    end
-end)
-
--- [[ RENDER LOOP ]] --
-local lastGhostTime = 0
-RunService.RenderStepped:Connect(function()
-    pcall(function() 
-        local tickTime = tick()
-        local currentThemeName = Themes[CurrentThemeIndex]
-        local activeColor = Color3.new(1,1,1)
-        if currentThemeName == "RGB" then activeColor = Color3.fromHSV(tickTime % 3 / 3, 1, 1) elseif ThemeColors[currentThemeName] then activeColor = ThemeColors[currentThemeName] end
-        
-        if States.AmbientSync then Lighting.OutdoorAmbient = activeColor; Lighting.Ambient = activeColor end
-        if States.NoFog then Lighting.FogEnd = 1000000; Lighting.FogStart = 1000000 end
-
-        DeathLabel.TextColor3 = activeColor
-        for i, obj in pairs(RGB_Objects) do 
-            if obj.Instance and obj.Instance.Parent then 
-                if obj.Type == "Stroke" then obj.Instance.Color = activeColor elseif obj.Type == "Text" then obj.Instance.TextColor3 = activeColor elseif obj.Type == "Image" then obj.Instance.ImageColor3 = activeColor elseif obj.Type == "Part" then obj.Instance.Color = activeColor end 
-            else table.remove(RGB_Objects, i) end 
-        end
-        
-        UpdateESPLines(activeColor)
-        
-        local wm = ScreenGui.Parent:FindFirstChild("AngerWatermark"); if wm then wm.Enabled = States.Watermark end
-        if PageInfo.Visible then InfoLabel.Text = string.format("SESSION:\nUser: %s\nID: %s\nFPS: %d\nPing: %d ms", Player.Name, SessionID, math.floor(workspace:GetRealPhysicsFPS()), math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())) end
-
-        local char = Player.Character; if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        local hum = char:FindFirstChild("Humanoid"); local root = char:FindFirstChild("HumanoidRootPart")
-
-        if States.AntiKnockback then
-             if root.Velocity.Magnitude > 25 then
-                 if hum.MoveDirection.Magnitude > 0 then
-                    root.Velocity = hum.MoveDirection * hum.WalkSpeed
-                 else
-                    root.Velocity = Vector3.new(0,0,0)
-                 end
-                 root.RotVelocity = Vector3.new(0,0,0)
-             end
-        end
-
-        if States.Aim then
-            local target = GetClosestPlayer()
-            if target and target:FindFirstChild("Head") then
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Head.Position), valSmooth)
-            end
-        end
-        
-        if States.IsRecording then 
-             local pos = root.CFrame
-             if hum and hum.SeatPart then pos = hum.SeatPart.CFrame end
-             table.insert(RecordedPath, {CF = pos}) 
-        end
-
-        if States.UnlockAll then 
-            Player.CameraMaxZoomDistance = 100000
-            Player.CameraMinZoomDistance = 0 
-            if Player.CameraMode ~= Enum.CameraMode.Classic then Player.CameraMode = Enum.CameraMode.Classic end
-        end
-
-        if States.SpdBypass and hum.MoveDirection.Magnitude > 0 then root.CFrame = root.CFrame + (hum.MoveDirection * valBypassSpeed) end
-        if States.Fly and root and hum then root.Velocity = Vector3.new(0, 0.1, 0); if hum.MoveDirection.Magnitude > 0 then root.CFrame = root.CFrame + (hum.MoveDirection * valFlySpeed) end; if up then root.CFrame = root.CFrame * CFrame.new(0, valFlySpeed, 0) end; if down then root.CFrame = root.CFrame * CFrame.new(0, -valFlySpeed, 0) end end
-        if States.KillAura then local tool = char:FindFirstChildOfClass("Tool"); if tool and tool:FindFirstChild("Handle") then for _, v in pairs(game.Players:GetPlayers()) do if v ~= Player and v.Character and v.Character:FindFirstChild("Head") and v.Character.Humanoid.Health > 0 then local dist = (v.Character.Head.Position - root.Position).Magnitude; if dist < 50 then tool.Handle.CFrame = v.Character.Head.CFrame; tool:Activate(); pcall(function() firetouchinterest(tool.Handle, v.Character.Head, 0); firetouchinterest(tool.Handle, v.Character.Head, 1) end); break end end end end end
-        if States.Ghosts and tick() - lastGhostTime > valGhostRate then lastGhostTime = tick(); for _, v in pairs(char:GetChildren()) do if v:IsA("BasePart") and v.Transparency < 1 then local g = v:Clone(); g.Parent = workspace; g.Anchored = true; g.CanCollide = false; g.CFrame = v.CFrame; g.Color = activeColor; g.Material = Enum.Material.Neon; g:ClearAllChildren(); TweenService:Create(g, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Transparency=1, CFrame=g.CFrame*CFrame.Angles(math.rad(math.random(-180,180)),math.rad(math.random(-180,180)),0), Size=g.Size*1.1}):Play(); Debris:AddItem(g, 0.5) end end end
-        if States.Spd and hum.MoveDirection.Magnitude > 0 then root.CFrame += (hum.MoveDirection * (0.5 * valSpeed)) end
-        if States.Jump then hum.UseJumpPower = true; hum.JumpPower = valJumpPower else hum.JumpPower = 50 end
-
-        if States.Esp then
-            for _, v in pairs(game.Players:GetPlayers()) do
-                if v ~= Player and v.Character then
-                    if not v.Character:FindFirstChild("AngerESP") then
-                        local hl = Instance.new("Highlight", v.Character); hl.Name = "AngerESP"; hl.FillTransparency = 0.5; hl.OutlineTransparency = 0
-                    else
-                        v.Character.AngerESP.FillColor = activeColor
-                    end
+                local dist2D = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                if dist2D < fov and dist2D < closestDist then
+                    closestDist = dist2D
+                    closest = p
                 end
             end
-        else
-            for _, v in pairs(game.Players:GetPlayers()) do if v.Character and v.Character:FindFirstChild("AngerESP") then v.Character.AngerESP:Destroy() end end
         end
+    end
+    return closest
+end
 
-        for _, v in pairs(game.Players:GetPlayers()) do 
-            if v ~= Player and v.Character and v.Character:FindFirstChild("Head") then 
-                local head = v.Character.Head
-                if States.Hitbox then
-                    head.Size = Vector3.new(valHitbox, valHitbox, valHitbox)
-                    head.Transparency = 0.7
-                    head.CanCollide = false
-                    head.Color = activeColor
-                    head.Material = Enum.Material.Neon
-                else
-                    head.Size = Vector3.new(1,1,1)
-                    head.Transparency = 0
-                end
-            end 
+-- ══════════════════════════════════════════════════════
+--  СОЗДАНИЕ GUI
+-- ══════════════════════════════════════════════════════
+-- Удаляем старый GUI если есть
+if PlayerGui:FindFirstChild("AngerMOD_V2") then
+    PlayerGui:FindFirstChild("AngerMOD_V2"):Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name           = "AngerMOD_V2"
+ScreenGui.ResetOnSpawn   = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent         = PlayerGui
+
+-- ══════════════════════════════════════════════════════
+--  ФОНОВЫЙ ЭКРАН ОШИБКИ
+-- ══════════════════════════════════════════════════════
+local ErrorBG = Instance.new("Frame")
+ErrorBG.Name             = "ErrorBG"
+ErrorBG.Size             = UDim2.new(1, 0, 1, 0)
+ErrorBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ErrorBG.ZIndex           = 1
+ErrorBG.Parent           = ScreenGui
+
+local errTextLbl = Instance.new("TextLabel")
+errTextLbl.Size                 = UDim2.new(1, 0, 1, 0)
+errTextLbl.BackgroundTransparency = 1
+errTextLbl.Text                 = string.rep("COPY KEY BEFORE OPEN GAME ERROR!! LOGIN ERROR!! COPY KEY BEFORE OPEN GAME ERROR!! LOGIN ERROR!!   ", 400)
+errTextLbl.TextColor3           = C.GOLD
+errTextLbl.TextSize             = 13
+errTextLbl.Font                 = Enum.Font.Code
+errTextLbl.TextWrapped          = true
+errTextLbl.TextXAlignment       = Enum.TextXAlignment.Left
+errTextLbl.TextYAlignment       = Enum.TextYAlignment.Top
+errTextLbl.ZIndex               = 2
+errTextLbl.Parent               = ErrorBG
+
+local bigErrLbl = Instance.new("TextLabel")
+bigErrLbl.Size                  = UDim2.new(0.9, 0, 0.28, 0)
+bigErrLbl.Position              = UDim2.new(0.05, 0, 0.36, 0)
+bigErrLbl.BackgroundTransparency = 1
+bigErrLbl.Text                  = "ERROR LOGIN\nANGERMOD"
+bigErrLbl.TextColor3            = C.RED
+bigErrLbl.TextSize              = 72
+bigErrLbl.Font                  = Enum.Font.GothamBold
+bigErrLbl.TextStrokeColor3      = C.GOLD
+bigErrLbl.TextStrokeTransparency = 0.3
+bigErrLbl.ZIndex                = 3
+bigErrLbl.Parent                = ErrorBG
+
+local verLblBG = Instance.new("TextLabel")
+verLblBG.Size                   = UDim2.new(1, 0, 0, 24)
+verLblBG.Position               = UDim2.new(0, 0, 1, -26)
+verLblBG.BackgroundTransparency = 1
+verLblBG.Text                   = "AngerMOD V-2  |  ROBLOX  |  " .. (keyFileLoaded and "key.txt загружен ✔" or "Встроенные ключи")
+verLblBG.TextColor3             = C.GOLD_DIM
+verLblBG.TextSize               = 12
+verLblBG.Font                   = Enum.Font.Code
+verLblBG.ZIndex                 = 3
+verLblBG.Parent                 = ErrorBG
+
+-- Пульсация фона ошибки
+RunService.Heartbeat:Connect(function()
+    if not isLoggedIn then
+        local a = math.abs(math.sin(tick() * 1.8))
+        bigErrLbl.TextColor3        = Color3.fromRGB(255, 40 + a*80, 40)
+        bigErrLbl.TextTransparency  = 0.05 + a * 0.22
+        errTextLbl.TextTransparency = 0.52 + a * 0.22
+    end
+end)
+
+-- ══════════════════════════════════════════════════════
+--  ГЛАВНОЕ ОКНО
+-- ══════════════════════════════════════════════════════
+local WIN_W, WIN_H = 500, 400
+
+local Win = Instance.new("Frame")
+Win.Name                 = "MainWindow"
+Win.Size                 = UDim2.new(0, WIN_W, 0, WIN_H)
+Win.Position             = UDim2.new(0.5, -WIN_W/2, 0.5, -WIN_H/2)
+Win.BackgroundColor3     = C.BG
+Win.BackgroundTransparency = 0.25
+Win.BorderSizePixel      = 0
+Win.ZIndex               = 10
+Win.Parent               = ScreenGui
+
+Instance.new("UICorner", Win).CornerRadius = UDim.new(0, 6)
+
+local winStroke = Instance.new("UIStroke", Win)
+winStroke.Color     = C.GOLD
+winStroke.Thickness = 1.5
+
+-- ══════════════════════════════════════════════════════
+--  ТАЙТЛБАР
+-- ══════════════════════════════════════════════════════
+local TBar = Instance.new("Frame")
+TBar.Name                = "TitleBar"
+TBar.Size                = UDim2.new(1, 0, 0, 34)
+TBar.BackgroundColor3    = C.BG_TITLE
+TBar.BackgroundTransparency = 0.15
+TBar.BorderSizePixel     = 0
+TBar.ZIndex              = 11
+TBar.Parent              = Win
+
+Instance.new("UICorner", TBar).CornerRadius = UDim.new(0, 6)
+
+-- Заглушка для нижних углов тайтлбара
+local tbFix = Instance.new("Frame", TBar)
+tbFix.Size               = UDim2.new(1, 0, 0.5, 0)
+tbFix.Position           = UDim2.new(0, 0, 0.5, 0)
+tbFix.BackgroundColor3   = C.BG_TITLE
+tbFix.BackgroundTransparency = 0.15
+tbFix.BorderSizePixel    = 0
+tbFix.ZIndex             = 11
+
+-- Разделитель
+local divLine = Instance.new("Frame", TBar)
+divLine.Size             = UDim2.new(1, 0, 0, 1)
+divLine.Position         = UDim2.new(0, 0, 1, -1)
+divLine.BackgroundColor3 = C.GOLD
+divLine.BackgroundTransparency = 0.45
+divLine.BorderSizePixel  = 0
+divLine.ZIndex           = 12
+
+-- Кнопка свернуть ▼
+local ArrowBtn = Instance.new("TextButton", TBar)
+ArrowBtn.Size            = UDim2.new(0, 28, 0, 24)
+ArrowBtn.Position        = UDim2.new(0, 5, 0.5, -12)
+ArrowBtn.BackgroundColor3 = C.GOLD
+ArrowBtn.BackgroundTransparency = 0.1
+ArrowBtn.Text            = "▼"
+ArrowBtn.TextColor3      = C.BLACK
+ArrowBtn.TextSize        = 11
+ArrowBtn.Font            = Enum.Font.GothamBold
+ArrowBtn.BorderSizePixel = 0
+ArrowBtn.ZIndex          = 13
+Instance.new("UICorner", ArrowBtn).CornerRadius = UDim.new(0, 3)
+
+-- Название
+local TitleLbl = Instance.new("TextLabel", TBar)
+TitleLbl.Size            = UDim2.new(0, 270, 1, 0)
+TitleLbl.Position        = UDim2.new(0, 38, 0, 0)
+TitleLbl.BackgroundTransparency = 1
+TitleLbl.Text            = "▶ AngerMOD V-2  |  ROBLOX 64BIT"
+TitleLbl.TextColor3      = C.GOLD
+TitleLbl.TextSize        = 12
+TitleLbl.Font            = Enum.Font.GothamBold
+TitleLbl.TextXAlignment  = Enum.TextXAlignment.Left
+TitleLbl.ZIndex          = 13
+
+-- FPS
+local FPSLbl = Instance.new("TextLabel", TBar)
+FPSLbl.Size              = UDim2.new(0, 90, 1, 0)
+FPSLbl.Position          = UDim2.new(1, -126, 0, 0)
+FPSLbl.BackgroundTransparency = 1
+FPSLbl.Text              = "FPS: --"
+FPSLbl.TextColor3        = C.GREEN
+FPSLbl.TextSize          = 12
+FPSLbl.Font              = Enum.Font.Code
+FPSLbl.TextXAlignment    = Enum.TextXAlignment.Right
+FPSLbl.ZIndex            = 13
+
+-- Закрыть X
+local XBtn = Instance.new("TextButton", TBar)
+XBtn.Size                = UDim2.new(0, 28, 0, 24)
+XBtn.Position            = UDim2.new(1, -33, 0.5, -12)
+XBtn.BackgroundColor3    = C.RED
+XBtn.BackgroundTransparency = 0.15
+XBtn.Text                = "✕"
+XBtn.TextColor3          = Color3.fromRGB(255, 255, 255)
+XBtn.TextSize            = 13
+XBtn.Font                = Enum.Font.GothamBold
+XBtn.BorderSizePixel     = 0
+XBtn.ZIndex              = 13
+Instance.new("UICorner", XBtn).CornerRadius = UDim.new(0, 3)
+
+-- ══════════════════════════════════════════════════════
+--  КОНТЕНТ
+-- ══════════════════════════════════════════════════════
+local Content = Instance.new("Frame", Win)
+Content.Name             = "Content"
+Content.Size             = UDim2.new(1, 0, 1, -34)
+Content.Position         = UDim2.new(0, 0, 0, 34)
+Content.BackgroundTransparency = 1
+Content.ZIndex           = 11
+
+-- ══════════════════════════════════════════════════════
+--  LOGIN FRAME
+-- ══════════════════════════════════════════════════════
+local LoginF = Instance.new("Frame", Content)
+LoginF.Name              = "LoginFrame"
+LoginF.Size              = UDim2.new(1, -28, 1, -12)
+LoginF.Position          = UDim2.new(0, 14, 0, 8)
+LoginF.BackgroundTransparency = 1
+LoginF.ZIndex            = 12
+
+local function makeLoginLabel(text, posY, size, color, font)
+    local lbl = Instance.new("TextLabel", LoginF)
+    lbl.Size             = UDim2.new(1, 0, 0, size or 22)
+    lbl.Position         = UDim2.new(0, 0, 0, posY)
+    lbl.BackgroundTransparency = 1
+    lbl.Text             = text
+    lbl.TextColor3       = color or C.WHITE
+    lbl.TextSize         = 14
+    lbl.Font             = font or Enum.Font.Gotham
+    lbl.TextXAlignment   = Enum.TextXAlignment.Left
+    lbl.ZIndex           = 13
+    return lbl
+end
+
+makeLoginLabel("Please PM Admin To Order Key", 6, 26, C.GOLD, Enum.Font.GothamBold)
+makeLoginLabel("Please Login (Copy Key)", 36, 22, C.WHITE, Enum.Font.Gotham)
+
+-- Поле ввода ключа
+local KeyBox = Instance.new("TextBox", LoginF)
+KeyBox.Size              = UDim2.new(1, 0, 0, 36)
+KeyBox.Position          = UDim2.new(0, 0, 0, 64)
+KeyBox.BackgroundColor3  = Color3.fromRGB(5, 5, 5)
+KeyBox.BackgroundTransparency = 0.3
+KeyBox.Text              = ""
+KeyBox.PlaceholderText   = 'loadstring(game:HttpGet("https://..."))()'
+KeyBox.PlaceholderColor3 = C.GRAY
+KeyBox.TextColor3        = C.GOLD
+KeyBox.TextSize          = 12
+KeyBox.Font              = Enum.Font.Code
+KeyBox.ClearTextOnFocus  = false
+KeyBox.BorderSizePixel   = 0
+KeyBox.ZIndex            = 13
+Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 4)
+local kbStr = Instance.new("UIStroke", KeyBox)
+kbStr.Color = C.GOLD ; kbStr.Thickness = 1 ; kbStr.Transparency = 0.35
+
+-- ENTER LOGIN
+local EnterBtn = Instance.new("TextButton", LoginF)
+EnterBtn.Size            = UDim2.new(1, 0, 0, 38)
+EnterBtn.Position        = UDim2.new(0, 0, 0, 108)
+EnterBtn.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+EnterBtn.BackgroundTransparency = 0.28
+EnterBtn.Text            = "ENTER LOGIN"
+EnterBtn.TextColor3      = C.GOLD
+EnterBtn.TextSize        = 14
+EnterBtn.Font            = Enum.Font.GothamBold
+EnterBtn.BorderSizePixel = 0
+EnterBtn.ZIndex          = 13
+Instance.new("UICorner", EnterBtn).CornerRadius = UDim.new(0, 4)
+local ebStr = Instance.new("UIStroke", EnterBtn)
+ebStr.Color = C.GOLD ; ebStr.Thickness = 1.2
+
+-- PASTE KEY
+local PasteBtn = Instance.new("TextButton", LoginF)
+PasteBtn.Size            = UDim2.new(1, 0, 0, 36)
+PasteBtn.Position        = UDim2.new(0, 0, 0, 152)
+PasteBtn.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+PasteBtn.BackgroundTransparency = 0.3
+PasteBtn.Text            = "PASTE KEY"
+PasteBtn.TextColor3      = C.GOLD
+PasteBtn.TextSize        = 13
+PasteBtn.Font            = Enum.Font.GothamBold
+PasteBtn.BorderSizePixel = 0
+PasteBtn.ZIndex          = 13
+Instance.new("UICorner", PasteBtn).CornerRadius = UDim.new(0, 4)
+local pbStr = Instance.new("UIStroke", PasteBtn)
+pbStr.Color = C.GOLD ; pbStr.Thickness = 1 ; pbStr.Transparency = 0.4
+
+-- Статус
+local StatusLbl = Instance.new("TextLabel", LoginF)
+StatusLbl.Size           = UDim2.new(1, 0, 0, 28)
+StatusLbl.Position       = UDim2.new(0, 0, 0, 196)
+StatusLbl.BackgroundTransparency = 1
+StatusLbl.Text           = keyFileLoaded and "✔  key.txt загружен" or "⚠  key.txt не найден — используются встроенные ключи"
+StatusLbl.TextColor3     = keyFileLoaded and C.GREEN or C.GOLD
+StatusLbl.TextSize       = 12
+StatusLbl.Font           = Enum.Font.GothamBold
+StatusLbl.ZIndex         = 13
+
+local verLblLogin = Instance.new("TextLabel", LoginF)
+verLblLogin.Size         = UDim2.new(1, 0, 0, 18)
+verLblLogin.Position     = UDim2.new(0, 0, 0, 228)
+verLblLogin.BackgroundTransparency = 1
+verLblLogin.Text         = "Game Version : ROBLOX  |  AngerMOD V-2"
+verLblLogin.TextColor3   = C.GRAY
+verLblLogin.TextSize     = 11
+verLblLogin.Font         = Enum.Font.Code
+verLblLogin.TextXAlignment = Enum.TextXAlignment.Left
+verLblLogin.ZIndex       = 13
+
+-- ══════════════════════════════════════════════════════
+--  CHEAT MENU (после логина)
+-- ══════════════════════════════════════════════════════
+local CheatMenu = Instance.new("Frame", Content)
+CheatMenu.Name           = "CheatMenu"
+CheatMenu.Size           = UDim2.new(1, 0, 1, 0)
+CheatMenu.BackgroundTransparency = 1
+CheatMenu.ZIndex         = 12
+CheatMenu.Visible        = false
+
+-- ТАБЫ (левая панель)
+local TabPanel = Instance.new("Frame", CheatMenu)
+TabPanel.Size            = UDim2.new(0, 100, 1, -6)
+TabPanel.Position        = UDim2.new(0, 6, 0, 3)
+TabPanel.BackgroundColor3 = C.BG_TITLE
+TabPanel.BackgroundTransparency = 0.3
+TabPanel.BorderSizePixel = 0
+TabPanel.ZIndex          = 13
+Instance.new("UICorner", TabPanel).CornerRadius = UDim.new(0, 4)
+
+local tabListLayout = Instance.new("UIListLayout", TabPanel)
+tabListLayout.Padding    = UDim.new(0, 3)
+local tabPad = Instance.new("UIPadding", TabPanel)
+tabPad.PaddingTop        = UDim.new(0, 4)
+tabPad.PaddingLeft       = UDim.new(0, 4)
+tabPad.PaddingRight      = UDim.new(0, 4)
+
+-- Правая панель контента
+local RightPanel = Instance.new("Frame", CheatMenu)
+RightPanel.Size          = UDim2.new(1, -114, 1, -6)
+RightPanel.Position      = UDim2.new(0, 110, 0, 3)
+RightPanel.BackgroundColor3 = C.BG
+RightPanel.BackgroundTransparency = 0.4
+RightPanel.BorderSizePixel = 0
+RightPanel.ZIndex        = 13
+Instance.new("UICorner", RightPanel).CornerRadius = UDim.new(0, 4)
+local rpStr = Instance.new("UIStroke", RightPanel)
+rpStr.Color = C.GOLD ; rpStr.Thickness = 0.8 ; rpStr.Transparency = 0.6
+
+-- Скролл для правой панели
+local RightScroll = Instance.new("ScrollingFrame", RightPanel)
+RightScroll.Size         = UDim2.new(1, -4, 1, -4)
+RightScroll.Position     = UDim2.new(0, 2, 0, 2)
+RightScroll.BackgroundTransparency = 1
+RightScroll.ScrollBarThickness = 3
+RightScroll.ScrollBarImageColor3 = C.GOLD
+RightScroll.ScrollBarImageTransparency = 0.35
+RightScroll.BorderSizePixel = 0
+RightScroll.ZIndex       = 14
+RightScroll.CanvasSize   = UDim2.new(0, 0, 0, 0)
+
+local scrollList = Instance.new("UIListLayout", RightScroll)
+scrollList.Padding       = UDim.new(0, 4)
+local scrollPad = Instance.new("UIPadding", RightScroll)
+scrollPad.PaddingTop     = UDim.new(0, 4)
+scrollPad.PaddingLeft    = UDim.new(0, 4)
+scrollPad.PaddingRight   = UDim.new(0, 4)
+scrollPad.PaddingBottom  = UDim.new(0, 6)
+
+scrollList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    RightScroll.CanvasSize = UDim2.new(0, 0, 0, scrollList.AbsoluteContentSize.Y + 14)
+end)
+
+-- ─────────────────────────────────────────────────────
+--  СОЗДАНИЕ ТАБА
+-- ─────────────────────────────────────────────────────
+local tabButtons    = {}
+local tabContents   = {}
+
+local function createTab(icon, label)
+    local btn = Instance.new("TextButton", TabPanel)
+    btn.Size             = UDim2.new(1, 0, 0, 34)
+    btn.BackgroundColor3 = C.BG_TAB
+    btn.BackgroundTransparency = 0.3
+    btn.Text             = icon .. "\n" .. label
+    btn.TextColor3       = C.GRAY
+    btn.TextSize         = 10
+    btn.Font             = Enum.Font.GothamBold
+    btn.BorderSizePixel  = 0
+    btn.ZIndex           = 14
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 3)
+
+    tabButtons[label] = btn
+    tabContents[label] = {}
+    return btn
+end
+
+-- ─────────────────────────────────────────────────────
+--  ВИДЖЕТЫ В ПРАВОЙ ПАНЕЛИ
+-- ─────────────────────────────────────────────────────
+local currentTabWidgets = {}  -- список Frame для скрытия/показа
+
+-- Секция-заголовок
+local function makeSection(text)
+    local f = Instance.new("Frame", RightScroll)
+    f.Size               = UDim2.new(1, -4, 0, 20)
+    f.BackgroundTransparency = 1
+    f.ZIndex             = 15
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size             = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text             = "─── " .. text .. " ───"
+    lbl.TextColor3       = C.GOLD
+    lbl.TextSize         = 11
+    lbl.Font             = Enum.Font.GothamBold
+    lbl.TextXAlignment   = Enum.TextXAlignment.Left
+    lbl.ZIndex           = 16
+    f.Visible            = false
+    return f
+end
+
+-- Тогл с колбэком
+local function makeToggle(label, desc, cheatKey, callback)
+    local state = Cheats[cheatKey]
+
+    local row = Instance.new("Frame", RightScroll)
+    row.Size             = UDim2.new(1, -4, 0, desc and 46 or 34)
+    row.BackgroundColor3 = C.BG_ROW
+    row.BackgroundTransparency = 0.38
+    row.BorderSizePixel  = 0
+    row.ZIndex           = 15
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
+    local rStr = Instance.new("UIStroke", row)
+    rStr.Color = C.GOLD ; rStr.Thickness = 0.5 ; rStr.Transparency = 0.72
+
+    local nameLbl = Instance.new("TextLabel", row)
+    nameLbl.Size         = UDim2.new(1, -70, 0, 20)
+    nameLbl.Position     = UDim2.new(0, 9, 0, desc and 4 or 7)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text         = label
+    nameLbl.TextColor3   = state and C.GOLD or C.WHITE
+    nameLbl.TextSize     = 13
+    nameLbl.Font         = Enum.Font.GothamBold
+    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+    nameLbl.ZIndex       = 16
+
+    if desc then
+        local descLbl = Instance.new("TextLabel", row)
+        descLbl.Size     = UDim2.new(1, -70, 0, 16)
+        descLbl.Position = UDim2.new(0, 9, 0, 24)
+        descLbl.BackgroundTransparency = 1
+        descLbl.Text     = desc
+        descLbl.TextColor3 = C.GRAY
+        descLbl.TextSize = 10
+        descLbl.Font     = Enum.Font.Gotham
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.ZIndex   = 16
+    end
+
+    local togBtn = Instance.new("TextButton", row)
+    togBtn.Size          = UDim2.new(0, 52, 0, 22)
+    togBtn.Position      = UDim2.new(1, -60, 0.5, -11)
+    togBtn.BackgroundColor3 = state and C.ON_COLOR or C.OFF_COLOR
+    togBtn.BackgroundTransparency = 0.12
+    togBtn.Text          = state and "ON" or "OFF"
+    togBtn.TextColor3    = state and C.BLACK or C.GRAY
+    togBtn.TextSize      = 11
+    togBtn.Font          = Enum.Font.GothamBold
+    togBtn.BorderSizePixel = 0
+    togBtn.ZIndex        = 16
+    Instance.new("UICorner", togBtn).CornerRadius = UDim.new(0, 3)
+    local tStr = Instance.new("UIStroke", togBtn)
+    tStr.Color = C.GOLD ; tStr.Thickness = 0.7 ; tStr.Transparency = 0.45
+
+    togBtn.MouseButton1Click:Connect(function()
+        state           = not state
+        Cheats[cheatKey] = state
+        TweenService:Create(togBtn, TweenInfo.new(0.14), {
+            BackgroundColor3 = state and C.ON_COLOR or C.OFF_COLOR,
+            TextColor3       = state and C.BLACK or C.GRAY,
+        }):Play()
+        togBtn.Text      = state and "ON" or "OFF"
+        nameLbl.TextColor3 = state and C.GOLD or C.WHITE
+        if callback then callback(state) end
+    end)
+
+    row.Visible = false
+    return row
+end
+
+-- Слайдер
+local function makeSlider(label, desc, cheatKey, minV, maxV, callback)
+    local val = Cheats[cheatKey] or minV
+
+    local row = Instance.new("Frame", RightScroll)
+    row.Size             = UDim2.new(1, -4, 0, 58)
+    row.BackgroundColor3 = C.BG_ROW
+    row.BackgroundTransparency = 0.38
+    row.BorderSizePixel  = 0
+    row.ZIndex           = 15
+    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
+    local rStr = Instance.new("UIStroke", row)
+    rStr.Color = C.GOLD ; rStr.Thickness = 0.5 ; rStr.Transparency = 0.72
+
+    local nameLbl = Instance.new("TextLabel", row)
+    nameLbl.Size         = UDim2.new(1, -80, 0, 18)
+    nameLbl.Position     = UDim2.new(0, 9, 0, 5)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text         = label
+    nameLbl.TextColor3   = C.WHITE
+    nameLbl.TextSize     = 12
+    nameLbl.Font         = Enum.Font.GothamBold
+    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+    nameLbl.ZIndex       = 16
+
+    local valLbl = Instance.new("TextLabel", row)
+    valLbl.Size          = UDim2.new(0, 60, 0, 18)
+    valLbl.Position      = UDim2.new(1, -68, 0, 5)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text          = tostring(val)
+    valLbl.TextColor3    = C.GOLD
+    valLbl.TextSize      = 12
+    valLbl.Font          = Enum.Font.Code
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    valLbl.ZIndex        = 16
+
+    if desc then
+        local descLbl = Instance.new("TextLabel", row)
+        descLbl.Size     = UDim2.new(1, -12, 0, 14)
+        descLbl.Position = UDim2.new(0, 9, 0, 22)
+        descLbl.BackgroundTransparency = 1
+        descLbl.Text     = desc
+        descLbl.TextColor3 = C.GRAY
+        descLbl.TextSize = 10
+        descLbl.Font     = Enum.Font.Gotham
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.ZIndex   = 16
+    end
+
+    -- Трек слайдера
+    local track = Instance.new("Frame", row)
+    track.Size           = UDim2.new(1, -18, 0, 6)
+    track.Position       = UDim2.new(0, 9, 0, 42)
+    track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    track.BackgroundTransparency = 0.2
+    track.BorderSizePixel = 0
+    track.ZIndex         = 16
+    Instance.new("UICorner", track).CornerRadius = UDim.new(0, 3)
+
+    local fill = Instance.new("Frame", track)
+    fill.Size            = UDim2.new((val - minV)/(maxV - minV), 0, 1, 0)
+    fill.BackgroundColor3 = C.GOLD
+    fill.BackgroundTransparency = 0.1
+    fill.BorderSizePixel = 0
+    fill.ZIndex          = 17
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 3)
+
+    local handle = Instance.new("TextButton", track)
+    handle.Size          = UDim2.new(0, 12, 0, 12)
+    handle.AnchorPoint   = Vector2.new(0.5, 0.5)
+    handle.Position      = UDim2.new((val - minV)/(maxV - minV), 0, 0.5, 0)
+    handle.BackgroundColor3 = C.GOLD
+    handle.BackgroundTransparency = 0
+    handle.Text          = ""
+    handle.BorderSizePixel = 0
+    handle.ZIndex        = 18
+    Instance.new("UICorner", handle).CornerRadius = UDim.new(0.5, 0)
+
+    -- Перетаскивание слайдера
+    local dragging = false
+    handle.MouseButton1Down:Connect(function() dragging = true end)
+    track.MouseButton1Down:Connect(function(_, x, _)
+        dragging = true
+        local rel = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        val = math.floor(minV + (maxV - minV) * rel)
+        Cheats[cheatKey] = val
+        fill.Size        = UDim2.new(rel, 0, 1, 0)
+        handle.Position  = UDim2.new(rel, 0, 0.5, 0)
+        valLbl.Text      = tostring(val)
+        if callback then callback(val) end
+    end)
+    UserInputService.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
         end
     end)
+    UserInputService.InputChanged:Connect(function(inp)
+        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+            local rel = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+            val = math.floor(minV + (maxV - minV) * rel)
+            Cheats[cheatKey] = val
+            fill.Size        = UDim2.new(rel, 0, 1, 0)
+            handle.Position  = UDim2.new(rel, 0, 0.5, 0)
+            valLbl.Text      = tostring(val)
+            if callback then callback(val) end
+        end
+    end)
+
+    row.Visible = false
+    return row
+end
+
+-- ─────────────────────────────────────────────────────
+--  РЕГИСТРАЦИЯ ТАБОВ
+-- ─────────────────────────────────────────────────────
+local tabDefs = {
+    { icon="🎯", label="AIMBOT"   },
+    { icon="👁", label="VISUALS"  },
+    { icon="⚡", label="MOVEMENT" },
+    { icon="🔧", label="MISC"     },
+}
+
+local widgetsByTab = {}   -- widgetsByTab[label] = {frame1, frame2, ...}
+
+for _, def in ipairs(tabDefs) do
+    widgetsByTab[def.label] = {}
+    createTab(def.icon, def.label)
+end
+
+-- Функции регистрации виджетов в таб
+local function addToTab(tabLabel, widget)
+    table.insert(widgetsByTab[tabLabel], widget)
+end
+
+-- ─────────────────────────────────────────────────────
+--  НАПОЛНЕНИЕ ТАБОВ ВИДЖЕТАМИ
+-- ─────────────────────────────────────────────────────
+
+-- ── AIMBOT ──────────────────────────────────────────
+local secAim1 = makeSection("AIMBOT SETTINGS")
+addToTab("AIMBOT", secAim1)
+
+addToTab("AIMBOT", makeToggle("🎯  Aimbot", "Автоматическая наводка на врага", "Aimbot", nil))
+addToTab("AIMBOT", makeToggle("🤖  Auto Aim", "Плавная наводка при прицеливании", "AutoAim", nil))
+addToTab("AIMBOT", makeToggle("🔇  Silent Aim", "Невидимое изменение траектории пули", "SilentAim", nil))
+
+local secAim2 = makeSection("FOV НАСТРОЙКИ")
+addToTab("AIMBOT", secAim2)
+
+addToTab("AIMBOT", makeToggle("⭕  FOV Circle", "Показывает круг зоны наводки", "AimFOV", nil))
+addToTab("AIMBOT", makeSlider("📐  FOV Радиус", "Радиус зоны автоприцела (пикс.)", "AimFOVRadius", 30, 400, nil))
+
+-- ── VISUALS ──────────────────────────────────────────
+local secVisSep = makeSection("ESP")
+addToTab("VISUALS", secVisSep)
+
+addToTab("VISUALS", makeToggle("📦  ESP Boxes", "Рамка вокруг врагов", "ESPBoxes", function(v)
+    if not v then
+        for _, obj in pairs(espObjects) do
+            if obj then pcall(function() obj:Destroy() end) end
+        end
+        espObjects = {}
+    end
+end))
+
+addToTab("VISUALS", makeToggle("🏷  Enemy Names", "Имена игроков над головой", "EnemyNames", nil))
+addToTab("VISUALS", makeToggle("🩸  Health Bar", "Полоска HP врага", "HealthBar", nil))
+
+local secVisRadar = makeSection("RADAR")
+addToTab("VISUALS", secVisRadar)
+
+addToTab("VISUALS", makeToggle("📍  Radar", "Мини-радар с врагами", "Radar", nil))
+
+-- ── MOVEMENT ──────────────────────────────────────────
+local secMov1 = makeSection("СКОРОСТЬ")
+addToTab("MOVEMENT", secMov1)
+
+addToTab("MOVEMENT", makeToggle("⚡  Speed Hack", "Увеличенная скорость передвижения", "SpeedHack", function(v)
+    local hum = getHum()
+    if not hum then return end
+    if v then
+        originalSpeed = hum.WalkSpeed
+        hum.WalkSpeed = Cheats.SpeedValue
+    else
+        hum.WalkSpeed = originalSpeed or 16
+    end
+end))
+
+addToTab("MOVEMENT", makeSlider("🏃  Walk Speed", "Скорость ходьбы", "SpeedValue", 16, 200, function(v)
+    if Cheats.SpeedHack then
+        local hum = getHum()
+        if hum then hum.WalkSpeed = v end
+    end
+end))
+
+local secMov2 = makeSection("ПРЫЖОК / ПОЛЁТ")
+addToTab("MOVEMENT", secMov2)
+
+addToTab("MOVEMENT", makeToggle("🦘  Infinite Jump", "Бесконечный прыжок", "InfiniteJump", nil))
+addToTab("MOVEMENT", makeToggle("🌀  No Clip", "Проходить сквозь стены", "NoClip", nil))
+addToTab("MOVEMENT", makeToggle("🦅  Fly Mode", "Режим полёта (Space - вверх, Shift - вниз)", "FlyMode", function(v)
+    local hrp = getHRP()
+    if not hrp then return end
+    if v then
+        flyBodyForce = Instance.new("BodyVelocity", hrp)
+        flyBodyForce.Velocity      = Vector3.zero
+        flyBodyForce.MaxForce      = Vector3.new(1e5, 1e5, 1e5)
+        flyBodyGyro = Instance.new("BodyGyro", hrp)
+        flyBodyGyro.D              = 100
+        flyBodyGyro.P              = 1e4
+        flyBodyGyro.MaxTorque      = Vector3.new(1e5, 1e5, 1e5)
+    else
+        if flyBodyForce then flyBodyForce:Destroy() ; flyBodyForce = nil end
+        if flyBodyGyro  then flyBodyGyro:Destroy()  ; flyBodyGyro  = nil end
+    end
+end))
+
+-- ── MISC ──────────────────────────────────────────
+local secMisc1 = makeSection("ОРУЖИЕ")
+addToTab("MISC", secMisc1)
+
+addToTab("MISC", makeToggle("🔫  No Recoil", "Убирает отдачу при стрельбе", "NoRecoil", nil))
+
+local secMisc2 = makeSection("ЗАЩИТА")
+addToTab("MISC", secMisc2)
+
+addToTab("MISC", makeToggle("🛡  Anti-Ban", "Защита аккаунта от бана", "AntiBan", nil))
+addToTab("MISC", makeToggle("💤  Anti-AFK", "Предотвращает кик за AFK", "AntiAFK", function(v)
+    -- реализуется через VirtualUser ниже
+end))
+
+local secMisc3 = makeSection("ИНФОРМАЦИЯ")
+addToTab("MISC", secMisc3)
+
+-- Статус-виджет (только для MISC)
+local infoRow = Instance.new("Frame", RightScroll)
+infoRow.Size             = UDim2.new(1, -4, 0, 70)
+infoRow.BackgroundColor3 = C.BG_ROW
+infoRow.BackgroundTransparency = 0.38
+infoRow.BorderSizePixel  = 0
+infoRow.ZIndex           = 15
+Instance.new("UICorner", infoRow).CornerRadius = UDim.new(0, 4)
+local iStr = Instance.new("UIStroke", infoRow)
+iStr.Color = C.GOLD ; iStr.Thickness = 0.5 ; iStr.Transparency = 0.7
+
+local infoLbl = Instance.new("TextLabel", infoRow)
+infoLbl.Size             = UDim2.new(1, -12, 1, -8)
+infoLbl.Position         = UDim2.new(0, 6, 0, 4)
+infoLbl.BackgroundTransparency = 1
+infoLbl.Text             = "⚙ AngerMOD V-2\n👤 " .. LocalPlayer.Name .. "\n🔑 key.txt: " .. (keyFileLoaded and "загружен" or "не найден")
+infoLbl.TextColor3       = C.WHITE
+infoLbl.TextSize         = 11
+infoLbl.Font             = Enum.Font.Code
+infoLbl.TextXAlignment   = Enum.TextXAlignment.Left
+infoLbl.TextYAlignment   = Enum.TextYAlignment.Top
+infoLbl.ZIndex           = 16
+infoRow.Visible          = false
+addToTab("MISC", infoRow)
+
+-- ─────────────────────────────────────────────────────
+--  ПЕРЕКЛЮЧЕНИЕ ТАБОВ
+-- ─────────────────────────────────────────────────────
+local function switchTab(label)
+    activeTab = label
+    -- Скрываем все виджеты
+    for tab, widgets in pairs(widgetsByTab) do
+        for _, w in ipairs(widgets) do
+            w.Visible = false
+        end
+        if tabButtons[tab] then
+            tabButtons[tab].TextColor3       = C.GRAY
+            tabButtons[tab].BackgroundColor3 = C.BG_TAB
+            TweenService:Create(tabButtons[tab], TweenInfo.new(0.12), {
+                BackgroundTransparency = 0.3,
+            }):Play()
+        end
+    end
+    -- Показываем нужные
+    for _, w in ipairs(widgetsByTab[label] or {}) do
+        w.Visible = true
+    end
+    if tabButtons[label] then
+        tabButtons[label].TextColor3 = C.GOLD
+        TweenService:Create(tabButtons[label], TweenInfo.new(0.12), {
+            BackgroundColor3    = C.BG_ACTIVE,
+            BackgroundTransparency = 0.15,
+        }):Play()
+        local str = tabButtons[label]:FindFirstChildOfClass("UIStroke")
+        if str then str:Destroy() end
+        local newStr = Instance.new("UIStroke", tabButtons[label])
+        newStr.Color = C.GOLD ; newStr.Thickness = 1 ; newStr.Transparency = 0.3
+    end
+end
+
+for _, def in ipairs(tabDefs) do
+    tabButtons[def.label].MouseButton1Click:Connect(function()
+        switchTab(def.label)
+    end)
+end
+
+-- ══════════════════════════════════════════════════════
+--  РАДАР (мини-карта)
+-- ══════════════════════════════════════════════════════
+local RadarFrame = Instance.new("Frame", ScreenGui)
+RadarFrame.Name              = "Radar"
+RadarFrame.Size              = UDim2.new(0, 120, 0, 120)
+RadarFrame.Position          = UDim2.new(1, -134, 1, -134)
+RadarFrame.BackgroundColor3  = Color3.fromRGB(5, 5, 5)
+RadarFrame.BackgroundTransparency = 0.35
+RadarFrame.BorderSizePixel   = 0
+RadarFrame.ZIndex            = 20
+RadarFrame.Visible           = false
+Instance.new("UICorner", RadarFrame).CornerRadius = UDim.new(0.5, 0)
+local radarStr = Instance.new("UIStroke", RadarFrame)
+radarStr.Color = C.GOLD ; radarStr.Thickness = 1.5
+
+-- Крест в центре
+local function makeLine(parent, sx, sy, px, py)
+    local l = Instance.new("Frame", parent)
+    l.Size               = UDim2.new(sx, 0, sy, 0)
+    l.Position           = UDim2.new(px, 0, py, 0)
+    l.BackgroundColor3   = C.GOLD
+    l.BackgroundTransparency = 0.55
+    l.BorderSizePixel    = 0
+    l.ZIndex             = 21
+end
+makeLine(RadarFrame, 1, 0, 0.5, 0, 0, 0)     -- вертикаль
+makeLine(RadarFrame, 0, 1, 0, 0, 0.5, 0)     -- горизонталь
+
+-- Точка игрока
+local playerDot = Instance.new("Frame", RadarFrame)
+playerDot.Size               = UDim2.new(0, 8, 0, 8)
+playerDot.Position           = UDim2.new(0.5, -4, 0.5, -4)
+playerDot.BackgroundColor3   = C.GREEN
+playerDot.BorderSizePixel    = 0
+playerDot.ZIndex             = 23
+Instance.new("UICorner", playerDot).CornerRadius = UDim.new(0.5, 0)
+
+-- ══════════════════════════════════════════════════════
+--  FOV CIRCLE
+-- ══════════════════════════════════════════════════════
+local FOVCircle = Instance.new("Frame", ScreenGui)
+FOVCircle.Name               = "FOVCircle"
+FOVCircle.BackgroundTransparency = 1
+FOVCircle.BorderSizePixel    = 0
+FOVCircle.ZIndex             = 20
+FOVCircle.Visible            = false
+
+local fovStroke = Instance.new("UIStroke", FOVCircle)
+fovStroke.Color              = C.GOLD
+fovStroke.Thickness          = 1.5
+fovStroke.Transparency       = 0.3
+Instance.new("UICorner", FOVCircle).CornerRadius = UDim.new(0.5, 0)
+
+local function updateFOVCircle()
+    local r = Cheats.AimFOVRadius
+    local cx = Camera.ViewportSize.X / 2
+    local cy = Camera.ViewportSize.Y / 2
+    FOVCircle.Size     = UDim2.new(0, r*2, 0, r*2)
+    FOVCircle.Position = UDim2.new(0, cx - r, 0, cy - r)
+end
+
+-- ══════════════════════════════════════════════════════
+--  MAIN LOOP (рендер)
+-- ══════════════════════════════════════════════════════
+local radarDots = {}
+
+RunService.RenderStepped:Connect(function()
+    local hrpSelf = getHRP()
+
+    -- ── ESP ──────────────────────────────────────────
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p == LocalPlayer then continue end
+
+        local char = p.Character
+        local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+        local hum  = char and char:FindFirstChildOfClass("Humanoid")
+
+        if not (char and hrp and hum) then
+            -- Очищаем esp если персонажа нет
+            if espObjects[p.Name] then
+                for _, v in pairs(espObjects[p.Name]) do
+                    pcall(function() v:Destroy() end)
+                end
+                espObjects[p.Name] = nil
+            end
+            continue
+        end
+
+        local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+        if not onScreen then
+            if espObjects[p.Name] then
+                for _, v in pairs(espObjects[p.Name]) do
+                    v.Visible = false
+                end
+            end
+            continue
+        end
+
+        -- Создаём ESP объект если нет
+        if not espObjects[p.Name] then
+            espObjects[p.Name] = {}
+            local eg = espObjects[p.Name]
+
+            -- Рамка
+            local box = Instance.new("Frame", ScreenGui)
+            box.BackgroundTransparency = 1
+            box.BorderSizePixel        = 0
+            box.ZIndex                 = 19
+            local bStr = Instance.new("UIStroke", box)
+            bStr.Color     = C.GOLD
+            bStr.Thickness = 1.5
+            eg.box         = box
+
+            -- Имя
+            local nameLbl2 = Instance.new("TextLabel", ScreenGui)
+            nameLbl2.BackgroundTransparency = 1
+            nameLbl2.TextColor3             = C.WHITE
+            nameLbl2.TextSize               = 12
+            nameLbl2.Font                   = Enum.Font.GothamBold
+            nameLbl2.TextStrokeColor3       = C.BLACK
+            nameLbl2.TextStrokeTransparency = 0
+            nameLbl2.ZIndex                 = 19
+            eg.nameLbl = nameLbl2
+
+            -- HP Bar фрейм
+            local hpFrame = Instance.new("Frame", ScreenGui)
+            hpFrame.BackgroundColor3      = Color3.fromRGB(30, 30, 30)
+            hpFrame.BackgroundTransparency = 0.3
+            hpFrame.BorderSizePixel       = 0
+            hpFrame.ZIndex                = 19
+            eg.hpFrame = hpFrame
+
+            local hpFill = Instance.new("Frame", hpFrame)
+            hpFill.BackgroundColor3       = C.GREEN
+            hpFill.BackgroundTransparency = 0.1
+            hpFill.BorderSizePixel        = 0
+            hpFill.ZIndex                 = 20
+            eg.hpFill = hpFill
+        end
+
+        local eg = espObjects[p.Name]
+
+        -- Рассчитываем размер рамки по высоте персонажа
+        local topPos3D     = hrp.Position + Vector3.new(0, 3.2, 0)
+        local botPos3D     = hrp.Position - Vector3.new(0, 3.2, 0)
+        local topScreen, _ = Camera:WorldToViewportPoint(topPos3D)
+        local botScreen, _ = Camera:WorldToViewportPoint(botPos3D)
+        local boxH         = math.abs(topScreen.Y - botScreen.Y)
+        local boxW         = boxH * 0.55
+        local bx           = screenPos.X - boxW / 2
+        local by           = topScreen.Y
+
+        -- Рамка
+        local showBox = Cheats.ESPBoxes
+        eg.box.Visible   = showBox
+        if showBox then
+            eg.box.Size     = UDim2.new(0, boxW, 0, boxH)
+            eg.box.Position = UDim2.new(0, bx, 0, by)
+        end
+
+        -- Имя
+        local showName = Cheats.EnemyNames
+        eg.nameLbl.Visible = showName
+        if showName then
+            eg.nameLbl.Text = p.Name
+            eg.nameLbl.Size = UDim2.new(0, boxW, 0, 16)
+            eg.nameLbl.Position = UDim2.new(0, bx, 0, by - 17)
+        end
+
+        -- HP Bar
+        local showHP = Cheats.HealthBar
+        eg.hpFrame.Visible = showHP
+        eg.hpFill.Visible  = showHP
+        if showHP then
+            local hpRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+            eg.hpFrame.Size     = UDim2.new(0, 4, 0, boxH)
+            eg.hpFrame.Position = UDim2.new(0, bx - 7, 0, by)
+            eg.hpFill.Size      = UDim2.new(1, 0, hpRatio, 0)
+            eg.hpFill.Position  = UDim2.new(0, 0, 1 - hpRatio, 0)
+            eg.hpFill.BackgroundColor3 = Color3.fromRGB(
+                math.floor(255 * (1 - hpRatio)),
+                math.floor(200 * hpRatio),
+                40
+            )
+        end
+    end
+
+    -- ── AIMBOT ───────────────────────────────────────
+    if Cheats.Aimbot or Cheats.AutoAim then
+        local target = getClosestEnemy()
+        if target then
+            local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            if targetHRP then
+                local lookAt = CFrame.lookAt(Camera.CFrame.Position, targetHRP.Position)
+                if Cheats.Aimbot then
+                    -- Жёсткий aimbot
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position) * (lookAt - lookAt.Position)
+                elseif Cheats.AutoAim then
+                    -- Плавный auto aim
+                    Camera.CFrame = Camera.CFrame:Lerp(lookAt, 0.08)
+                end
+            end
+        end
+    end
+
+    -- ── FOV CIRCLE ───────────────────────────────────
+    FOVCircle.Visible = Cheats.AimFOV and isLoggedIn
+    if Cheats.AimFOV then
+        updateFOVCircle()
+    end
+
+    -- ── RADAR ────────────────────────────────────────
+    RadarFrame.Visible = Cheats.Radar and isLoggedIn
+    if Cheats.Radar and hrpSelf then
+        -- Чистим старые точки
+        for _, dot in pairs(radarDots) do
+            dot:Destroy()
+        end
+        radarDots = {}
+
+        local RANGE = 150
+        local SIZE  = RadarFrame.AbsoluteSize.X / 2
+
+        for _, p in ipairs(getEnemies()) do
+            local hrp2 = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+            if hrp2 then
+                local diff = hrp2.Position - hrpSelf.Position
+                local camLook = Camera.CFrame.LookVector
+                local right   = Camera.CFrame.RightVector
+                local rx      = diff:Dot(right)
+                local ry      = diff:Dot(camLook)
+                local rel     = Vector2.new(rx, ry)
+                if rel.Magnitude < RANGE then
+                    local norm = rel / RANGE
+                    local dot2 = Instance.new("Frame", RadarFrame)
+                    dot2.Size                = UDim2.new(0, 7, 0, 7)
+                    dot2.AnchorPoint         = Vector2.new(0.5, 0.5)
+                    dot2.Position            = UDim2.new(0.5 + norm.X*0.45, 0, 0.5 - norm.Y*0.45, 0)
+                    dot2.BackgroundColor3    = C.RED
+                    dot2.BackgroundTransparency = 0.1
+                    dot2.BorderSizePixel     = 0
+                    dot2.ZIndex              = 22
+                    Instance.new("UICorner", dot2).CornerRadius = UDim.new(0.5, 0)
+                    table.insert(radarDots, dot2)
+                end
+            end
+        end
+    end
+
+    -- ── NO CLIP ──────────────────────────────────────
+    if Cheats.NoClip then
+        local char = getChar()
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+
+    -- ── FLY ──────────────────────────────────────────
+    if Cheats.FlyMode and flyBodyForce then
+        local moveDir = Vector3.zero
+        local SPEED   = 60
+        local camCF   = Camera.CFrame
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDir += camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir -= camCF.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir -= camCF.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir += camCF.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir += Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            moveDir -= Vector3.new(0, 1, 0)
+        end
+        flyBodyForce.Velocity = moveDir.Magnitude > 0 and (moveDir.Unit * SPEED) or Vector3.zero
+        flyBodyGyro.CFrame    = camCF
+    end
 end)
 
-UserInputService.JumpRequest:Connect(function() if States.InfJump and Player.Character and Player.Character:FindFirstChild("Humanoid") then Player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end; if States.Circle then SpawnRipple() end end)
-Player.Idled:Connect(function() if States.AntiAfk then VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end end)
+-- ── INFINITE JUMP ────────────────────────────────────
+UserInputService.JumpRequest:Connect(function()
+    if Cheats.InfiniteJump then
+        local hum = getHum()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
 
--- ASSET LOADING
+-- ── ANTI-AFK ─────────────────────────────────────────
 task.spawn(function()
-    local urlLogo = "https://raw.githubusercontent.com/AngerPC-DEV/AngerMOD/main/AngerMOD.png"
-    local fileLogo = "AngerMOD_Logo_V127.png"
-    if writefile and readfile then pcall(function() if not isfile(fileLogo) then writefile(fileLogo, game:HttpGet(urlLogo)) end end) end
-    local lg = Instance.new("ScreenGui", ScreenGui.Parent); lg.Name = "AngerWatermark"; local im = Instance.new("ImageLabel", lg); im.Size = UDim2.new(0, 200, 0, 100); im.Position = UDim2.new(0, 10, 0, 10); im.BackgroundTransparency = 1; im.BorderSizePixel = 0; local stroke = Instance.new("UIStroke", im); stroke.Thickness = 3; stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; stroke.Color = Color3.new(1, 0, 0); table.insert(RGB_Objects, {Type = "Stroke", Instance = stroke})
-    local s, a = pcall(function() return getcustomasset(fileLogo) end); if s then im.Image = a else im.Image = urlLogo end
+    while task.wait(60) do
+        if Cheats.AntiAFK then
+            local VU = game:GetService("VirtualUser")
+            VU:Button2Down(Vector2.new(0, 0), CFrame.new())
+            task.wait(0.1)
+            VU:Button2Up(Vector2.new(0, 0), CFrame.new())
+        end
+    end
 end)
 
-task.spawn(function()
-    local pentagramUrl = "https://raw.githubusercontent.com/AngerPC-DEV/AngerMOD/main/circle1.png"
-    local pentagramName = "Anger_Pentagram_Circle1.png"
-    if writefile and readfile and isfile then pcall(function() if not isfile(pentagramName) then writefile(pentagramName, game:HttpGet(pentagramUrl)) end end) end
+-- ── SPEED HACK (на спавне нового персонажа) ──────────
+LocalPlayer.CharacterAdded:Connect(function(char)
+    if Cheats.SpeedHack then
+        local hum = char:WaitForChild("Humanoid")
+        hum.WalkSpeed = Cheats.SpeedValue
+    end
+    -- Сбрасываем fly при respawn
+    flyBodyForce = nil
+    flyBodyGyro  = nil
 end)
 
-Notify("AngerPC V127 LOADED")
+-- ── FPS СЧЁТЧИК ──────────────────────────────────────
+local frameCount2 = 0
+local lastT2      = tick()
+RunService.RenderStepped:Connect(function()
+    frameCount2 += 1
+    if tick() - lastT2 >= 0.5 then
+        local fps = math.floor(frameCount2 / (tick() - lastT2))
+        FPSLbl.Text = "FPS: " .. fps
+        FPSLbl.TextColor3 = fps >= 55 and C.GREEN or (fps >= 30 and C.GOLD or C.RED)
+        frameCount2 = 0
+        lastT2 = tick()
+    end
+end)
+
+-- ══════════════════════════════════════════════════════
+--  ПЕРЕТАСКИВАНИЕ ОКНА
+-- ══════════════════════════════════════════════════════
+TBar.InputBegan:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        isDragging = true
+        dragStart  = inp.Position
+        startPos   = Win.Position
+    end
+end)
+UserInputService.InputChanged:Connect(function(inp)
+    if isDragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+        local d = inp.Position - dragStart
+        Win.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    end
+end)
+UserInputService.InputEnded:Connect(function(inp)
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        isDragging = false
+    end
+end)
+
+-- ══════════════════════════════════════════════════════
+--  СВЕРНУТЬ / РАЗВЕРНУТЬ
+-- ══════════════════════════════════════════════════════
+ArrowBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    ArrowBtn.Text = isMinimized and "▶" or "▼"
+    local targetH = isMinimized and 34 or WIN_H
+    TweenService:Create(Win, TweenInfo.new(0.26, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, WIN_W, 0, targetH)
+    }):Play()
+end)
+
+-- ══════════════════════════════════════════════════════
+--  ЗАКРЫТЬ
+-- ══════════════════════════════════════════════════════
+XBtn.MouseButton1Click:Connect(function()
+    TweenService:Create(Win, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+        Size     = UDim2.new(0, 0, 0, 0),
+        Position = Win.Position + UDim2.new(0, WIN_W/2, 0, WIN_H/2),
+    }):Play()
+    task.delay(0.25, function() Win.Visible = false end)
+end)
+
+-- ══════════════════════════════════════════════════════
+--  ЛОГИКА ВХОДА
+-- ══════════════════════════════════════════════════════
+local function checkKey(raw)
+    local k = (raw or ""):match("^%s*(.-)%s*$")
+    for _, v in ipairs(validKeys) do
+        if v == k then return true end
+    end
+    return false
+end
+
+local function shakeWin()
+    local orig = Win.Position
+    for i = 1, 7 do
+        TweenService:Create(Win, TweenInfo.new(0.035), {
+            Position = orig + UDim2.new(0, i%2==0 and 7 or -7, 0, 0)
+        }):Play()
+        task.wait(0.04)
+    end
+    Win.Position = orig
+end
+
+local function doLogin()
+    if checkKey(KeyBox.Text) then
+        isLoggedIn = true
+
+        -- Анимация успеха
+        StatusLbl.TextColor3 = C.GREEN
+        StatusLbl.Text       = "✔  Доступ открыт! Добро пожаловать, " .. LocalPlayer.Name
+
+        TweenService:Create(ErrorBG, TweenInfo.new(0.7), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(errTextLbl, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+        TweenService:Create(bigErrLbl,  TweenInfo.new(0.4), {TextTransparency = 1}):Play()
+        task.delay(0.72, function() ErrorBG.Visible = false end)
+
+        task.delay(0.85, function()
+            LoginF.Visible    = false
+            CheatMenu.Visible = true
+            switchTab("AIMBOT")
+        end)
+    else
+        StatusLbl.TextColor3 = C.RED
+        StatusLbl.Text       = "✖  Key not registered or expired"
+        shakeWin()
+    end
+end
+
+EnterBtn.MouseButton1Click:Connect(doLogin)
+
+KeyBox.FocusLost:Connect(function(enter)
+    if enter then doLogin() end
+end)
+
+PasteBtn.MouseButton1Click:Connect(function()
+    local ok, clip = pcall(function() return getclipboard() end)
+    if ok and clip and clip ~= "" then
+        KeyBox.Text          = clip
+        StatusLbl.TextColor3 = C.GOLD
+        StatusLbl.Text       = "📋  Ключ вставлен из буфера"
+    else
+        StatusLbl.TextColor3 = Color3.fromRGB(180, 180, 50)
+        StatusLbl.Text       = "⚠  getclipboard() недоступен — введи ключ вручную"
+    end
+end)
+
+-- Ховер на кнопках
+for _, b in ipairs({EnterBtn, PasteBtn}) do
+    b.MouseEnter:Connect(function()
+        TweenService:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
+    end)
+    b.MouseLeave:Connect(function()
+        TweenService:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
+    end)
+end
+
+-- ══════════════════════════════════════════════════════
+--  РЕГИСТРАЦИЯ (создание key.txt)
+-- ══════════════════════════════════════════════════════
+-- Если key.txt не существует — создаём шаблон
+if not keyFileLoaded then
+    pcall(function()
+        if not isfile("key.txt") then
+            writefile("key.txt", "ANGER-2025-ALPHA\nANGER-VIP-001\nANGER-KEY-XYZ\nTESTKEY123\nRAGE-MOD-KEY\n")
+            -- Перечитываем
+            local content = readfile("key.txt")
+            validKeys = {}
+            for line in content:gmatch("[^\r\n]+") do
+                local t = line:match("^%s*(.-)%s*$")
+                if t ~= "" then table.insert(validKeys, t) end
+            end
+            StatusLbl.Text = "✔  key.txt создан автоматически"
+            StatusLbl.TextColor3 = C.GREEN
+        end
+    end)
+end
+
+print("[AngerMOD V-2] ✔ Загружен. Ключей загружено: " .. #validKeys)
+print("[AngerMOD V-2] Доступные ключи (для теста): " .. table.concat(validKeys, ", "))
