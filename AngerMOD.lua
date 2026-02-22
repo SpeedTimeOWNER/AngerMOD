@@ -1,1516 +1,1328 @@
 --[[
-    ╔══════════════════════════════════════════╗
-    ║         AngerMOD V-2  |  ROBLOX          ║
-    ║   Все функции рабочие + система ключей   ║
-    ╚══════════════════════════════════════════╝
+████████████████████████████████████████████████████████
+█                                                      █
+█           AngerMOD V-2  |  ROBLOX EXECUTOR           █
+█                                                      █
+████████████████████████████████████████████████████████
 
-    УСТАНОВКА:
-    1. Положи key.txt рядом со скриптом (для executor'ов)
-       Каждая строка = отдельный пароль
-    2. Выполни скрипт через executor (напр. Synapse X, KRNL, Fluxus)
+  УСТАНОВКА:
+  1. Положи key.txt в папку workspace executor'а
+     (рядом с .exe файлом, например Synapse/KRNL)
+  2. В key.txt каждая строка = один пароль
+  3. Запусти скрипт через executor в любой игре Roblox
 
-    key.txt пример:
-        ANGER-2025-ALPHA
-        ANGER-VIP-001
-        TESTKEY123
+  ТЕСТОВЫЕ КЛЮЧИ (если key.txt не найден):
+     ANGER-2025-ALPHA
+     ANGER-VIP-001
+     TESTKEY123
 ]]
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  СЕРВИСЫ
--- ══════════════════════════════════════════════════════
-local Players            = game:GetService("Players")
-local RunService         = game:GetService("RunService")
-local UserInputService   = game:GetService("UserInputService")
-local TweenService       = game:GetService("TweenService")
-local Workspace          = game:GetService("Workspace")
-local CollectionService  = game:GetService("CollectionService")
-local ReplicatedStorage  = game:GetService("ReplicatedStorage")
+-- ════════════════════════════════════════════
+local Players          = game:GetService("Players")
+local RunService       = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService     = game:GetService("TweenService")
+local Camera           = workspace.CurrentCamera
 
-local LocalPlayer        = Players.LocalPlayer
-local PlayerGui          = LocalPlayer:WaitForChild("PlayerGui")
-local Camera             = Workspace.CurrentCamera
+local LP               = Players.LocalPlayer
+local PGui             = LP:WaitForChild("PlayerGui")
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  ЧТЕНИЕ key.txt
--- ══════════════════════════════════════════════════════
-local validKeys = {}
+-- ════════════════════════════════════════════
+local KEYS = {}
+local keyFileStatus = "not_found"
 
-local function loadKeys()
-    -- Попытка прочитать key.txt через executor API
-    local ok, result = pcall(function()
-        return readfile("key.txt")
-    end)
-    if ok and result then
-        for line in result:gmatch("[^\r\n]+") do
-            local trimmed = line:match("^%s*(.-)%s*$")
-            if trimmed ~= "" then
-                table.insert(validKeys, trimmed)
+local function reloadKeys()
+    KEYS = {}
+    -- Пробуем разные пути где может лежать key.txt
+    local paths = {
+        "key.txt",
+        "AngerMOD/key.txt",
+        "scripts/key.txt",
+    }
+    for _, path in ipairs(paths) do
+        local ok, content = pcall(readfile, path)
+        if ok and content and #content > 0 then
+            for line in (content .. "\n"):gmatch("([^\r\n]*)\r?\n") do
+                line = line:match("^%s*(.-)%s*$")
+                if line ~= "" then
+                    table.insert(KEYS, line)
+                end
+            end
+            if #KEYS > 0 then
+                keyFileStatus = "loaded_" .. path
+                return true
             end
         end
-        return true
     end
-    -- Fallback — встроенные ключи если key.txt не найден
-    validKeys = {
-    "AngerMOD-1D-YXBH3WH0JS",
-    "AngerMOD-1D-ANCOODMI9N",
-    "AngerMOD-1D-RZTVXYNNZ8",
-    "AngerMOD-1D-43S92TGYPW",
-    "AngerMOD-1D-UTFXZC97QN",
-    "AngerMOD-1D-5ALUDZMCLA",
-    "AngerMOD-1D-R6017AOPOU",
-    "AngerMOD-1D-HIGX3JLKZB",
-    "AngerMOD-1D-EN2C8LUHV5",
-    "AngerMOD-1D-BJQ861YYC1",
-    "AngerMOD-1D-2SCSVF7GDN",
-    "AngerMOD-1D-O7TBXLH7UF",
-    "AngerMOD-1D-KG8FR2CK07",
-    "AngerMOD-1D-R3703GZBYI",
-    "AngerMOD-1D-DGMWQJNGLL",
-    "AngerMOD-1D-PVO68Q8Q7J",
-    "AngerMOD-1D-VBRYTNK6MY",
-    "AngerMOD-1D-X2AHRAL743",
-    "AngerMOD-1D-Q5DM9268FN",
-    "AngerMOD-1D-HOCO0S90MI",
-    "AngerMOD-1D-D0UN4BIL07",
-    "AngerMOD-1D-WGQ6FJQX52",
-    "AngerMOD-1D-ZF5J7UKQTP",
-    "AngerMOD-1D-5TLP74NZV5",
-    "AngerMOD-1D-ZXUFEN4UWY",
-    "AngerMOD-1D-VU6OHLZKW7",
-    "AngerMOD-1D-XN3LF7TLLM",
-    "AngerMOD-1D-1USK0EQXUE",
-    "AngerMOD-1D-IW2SXXI899",
-    "AngerMOD-1D-7ZUFG3WRMR",
-    "AngerMOD-1D-Y4NN864RGV",
-    "AngerMOD-1D-ROZ9B7LA2L",
-    "AngerMOD-1D-EZUFQDW0KJ",
-    "AngerMOD-1D-7Z0CRQQBC1",
-    "AngerMOD-1D-DGFKN9G7RO",
-    "AngerMOD-1D-BMR3LNMPCU",
-    "AngerMOD-1D-KVAJ0F1C10",
-    "AngerMOD-1D-QB180KFOCR",
-    "AngerMOD-1D-9D7IOOC5GA",
-    "AngerMOD-1D-4NEHGGJC5A",
-    "AngerMOD-1D-2CI33VFBO6",
-    "AngerMOD-1D-S4ZQC2PLYY",
-    "AngerMOD-1D-VVOSLBHSN6",
-    "AngerMOD-1D-3DI99V5GRN",
-    "AngerMOD-1D-0LN1KXWZPU",
-    "AngerMOD-1D-9FXVCILBDQ",
-    "AngerMOD-1D-R2B5FH9G0E",
-    "AngerMOD-1D-U9VSSZ0JFB",
-    "AngerMOD-1D-A64FO4KI5M",
-    "AngerMOD-1D-9ODCD94L8G",
-    "AngerMOD-1D-NXAMMDSGIZ",
-    "AngerMOD-1D-U6WZ139HN7",
-    "AngerMOD-1D-SZW8R3T0X6",
-    "AngerMOD-1D-B7AB5AOQKW",
-    "AngerMOD-1D-D891IAITXA",
-    "AngerMOD-1D-78JK75TPOX",
-    "AngerMOD-1D-87GKQ3C9DN",
-    "AngerMOD-1D-NNBK18N25D",
-    "AngerMOD-1D-RV3SXNFYNF",
-    "AngerMOD-1D-8RSW9NCPDG",
-    "AngerMOD-1D-JMFGN6GQG6",
-    "AngerMOD-1D-PNJV3KYFSN",
-    "AngerMOD-1D-IQKZWMBE00",
-    "AngerMOD-1D-2P5H8RSRS2",
-    "AngerMOD-1D-IUDXPJL32D",
-    "AngerMOD-1D-N949EIV0YS",
-    "AngerMOD-1D-8JLQM7H6BG",
-    "AngerMOD-1D-WS8XY903SM",
-    "AngerMOD-1D-56LX0D7FVA",
-    "AngerMOD-1D-OL1I8ROFA4",
-    "AngerMOD-1D-FXNSHEWJUA",
-    "AngerMOD-1D-KF9TW8LPTG",
-    "AngerMOD-1D-SQAM6P99QU",
-    "AngerMOD-1D-ZH05NNDATJ",
-    "AngerMOD-1D-F8OHI8E52X",
-    "AngerMOD-1D-BEJSTN8LVY",
-    "AngerMOD-1D-D2HJUDBF2T",
-    "AngerMOD-1D-MWWE15FZFI",
-    "AngerMOD-1D-W5HMZ0CBDG",
-    "AngerMOD-1D-K41DHQU2CU",
-    "AngerMOD-1D-8S2P6WM2SF",
-    "AngerMOD-1D-XZ2O58RL6R",
-    "AngerMOD-1D-JGLPXA6XPJ",
-    "AngerMOD-1D-KC2TX9LUF2",
-    "AngerMOD-1D-FTK2785WNG",
-    "AngerMOD-1D-NAMKMF0H8X",
-    "AngerMOD-1D-42W19G1YZS",
-    "AngerMOD-1D-8KZIUCHLLX",
-    "AngerMOD-1D-F3XRGNOESX",
-    "AngerMOD-1D-686UKCCBUI",
-    "AngerMOD-1D-561HPP0QWC",
-    "AngerMOD-1D-OO30BRJ97E",
-    "AngerMOD-1D-DEJXYKIG9J",
-    "AngerMOD-1D-4UO8URQINY",
-    "AngerMOD-1D-FHUEUJPNSL",
-    "AngerMOD-1D-N2QZ4FO1QS",
-    "AngerMOD-1D-4K25WU5DEX",
-    "AngerMOD-1D-1DSKZTB2P1",
-    }
+    -- Fallback встроенные ключи
+    KEYS = {"ANGER-2025-ALPHA", "ANGER-VIP-001", "ANGER-KEY-XYZ", "TESTKEY123", "RAGE-MOD-KEY"}
+    keyFileStatus = "fallback"
     return false
 end
 
-local keyFileLoaded = loadKeys()
+local keyFileFound = reloadKeys()
 
--- ══════════════════════════════════════════════════════
+local function isValidKey(input)
+    local k = (input or ""):match("^%s*(.-)%s*$")
+    if k == "" then return false end
+    for _, v in ipairs(KEYS) do
+        if v == k then return true end
+    end
+    return false
+end
+
+-- ════════════════════════════════════════════
 --  СОСТОЯНИЕ ЧИТОВ
--- ══════════════════════════════════════════════════════
-local Cheats = {
-    -- AIMBOT
-    Aimbot          = false,
-    AutoAim         = false,
-    SilentAim       = false,
-    AimFOV          = false,
-    AimFOVRadius    = 120,
+-- ════════════════════════════════════════════
+local CH = {
+    Aimbot        = false,
+    AutoAim       = false,
+    SilentAim     = false,
+    FOVCircle     = false,
+    FOVRadius     = 150,
 
-    -- VISUALS
-    ESPBoxes        = false,
-    EnemyNames      = false,
-    HealthBar       = false,
-    Radar           = false,
+    ESPBoxes      = false,
+    ESPNames      = false,
+    ESPHealth     = false,
+    ESPTracer     = false,
+    Radar         = false,
 
-    -- MOVEMENT
-    SpeedHack       = false,
-    SpeedValue      = 32,
-    InfiniteJump    = false,
-    NoClip          = false,
-    FlyMode         = false,
+    SpeedHack     = false,
+    WalkSpeed     = 32,
+    InfJump       = false,
+    NoClip        = false,
+    Fly           = false,
 
-    -- MISC
-    NoRecoil        = false,
-    AntiBan         = true,
-    AntiAFK         = true,
+    NoRecoil      = false,
+    AntiBan       = true,
+    AntiAFK       = true,
+    FullBright    = false,
 }
 
--- Состояние GUI
-local isLoggedIn    = false
-local isMinimized   = false
-local isDragging    = false
-local dragStart     = nil
-local startPos      = nil
-local activeTab     = "AIMBOT"
+-- ════════════════════════════════════════════
+--  ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+-- ════════════════════════════════════════════
+local isLoggedIn  = false
+local isMinimized = false
+local isDragging  = false
+local dragOffset  = Vector2.zero
 
--- Для cleanup
-local connections   = {}
-local espObjects    = {}
-local flyBodyForce  = nil
-local flyBodyGyro   = nil
-local originalSpeed = nil
+local espCache    = {}     -- espCache[player] = {box, nameLbl, hpBar, hpFill, tracer}
+local flyVel      = nil
+local flyGyro     = nil
+local origSpeed   = 16
+local radarDots   = {}
 
--- ══════════════════════════════════════════════════════
---  ЦВЕТА
--- ══════════════════════════════════════════════════════
-local C = {
-    GOLD        = Color3.fromRGB(218, 165, 32),
-    GOLD_DIM    = Color3.fromRGB(150, 110, 15),
-    BG          = Color3.fromRGB(8,   8,   8),
-    BG_TITLE    = Color3.fromRGB(4,   4,   4),
-    BG_ROW      = Color3.fromRGB(14,  14,  14),
-    BG_TAB      = Color3.fromRGB(18,  18,  18),
-    BG_ACTIVE   = Color3.fromRGB(25,  20,   5),
-    WHITE       = Color3.fromRGB(225, 225, 225),
-    GRAY        = Color3.fromRGB(120, 120, 120),
-    RED         = Color3.fromRGB(200,  40,  40),
-    GREEN       = Color3.fromRGB(30,  210,  80),
-    ON_COLOR    = Color3.fromRGB(218, 165,  32),
-    OFF_COLOR   = Color3.fromRGB(45,   45,  45),
-    BLACK       = Color3.fromRGB(0,    0,    0),
-}
-
--- ══════════════════════════════════════════════════════
---  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
--- ══════════════════════════════════════════════════════
-local function getChar()
-    return LocalPlayer.Character
-end
-
-local function getHRP()
-    local char = getChar()
-    return char and char:FindFirstChild("HumanoidRootPart")
-end
-
-local function getHum()
-    local char = getChar()
-    return char and char:FindFirstChildOfClass("Humanoid")
-end
+-- ════════════════════════════════════════════
+--  УТИЛИТЫ
+-- ════════════════════════════════════════════
+local function getChar()  return LP.Character end
+local function getHRP()   local c=getChar(); return c and c:FindFirstChild("HumanoidRootPart") end
+local function getHum()   local c=getChar(); return c and c:FindFirstChildOfClass("Humanoid") end
 
 local function getEnemies()
-    local enemies = {}
+    local list = {}
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            table.insert(enemies, p)
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(list, p)
         end
     end
-    return enemies
+    return list
 end
 
-local function getClosestEnemy()
-    local closest, closestDist = nil, math.huge
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    local fov = Cheats.AimFOVRadius
-
+local function getNearestEnemy()
+    local best, bestDist = nil, math.huge
+    local cx = Camera.ViewportSize.X/2
+    local cy = Camera.ViewportSize.Y/2
     for _, p in ipairs(getEnemies()) do
         local hrp = p.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
-            local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-            if onScreen then
-                local dist2D = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                if dist2D < fov and dist2D < closestDist then
-                    closestDist = dist2D
-                    closest = p
+            local sp, vis = Camera:WorldToViewportPoint(hrp.Position)
+            if vis then
+                local d = Vector2.new(sp.X - cx, sp.Y - cy).Magnitude
+                if d < CH.FOVRadius and d < bestDist then
+                    bestDist = d
+                    best = p
                 end
             end
         end
     end
-    return closest
+    return best
 end
 
--- ══════════════════════════════════════════════════════
---  СОЗДАНИЕ GUI
--- ══════════════════════════════════════════════════════
--- Удаляем старый GUI если есть
-if PlayerGui:FindFirstChild("AngerMOD_V2") then
-    PlayerGui:FindFirstChild("AngerMOD_V2"):Destroy()
+local function tween(obj, props, t)
+    TweenService:Create(obj, TweenInfo.new(t or 0.15, Enum.EasingStyle.Quad), props):Play()
 end
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name           = "AngerMOD_V2"
-ScreenGui.ResetOnSpawn   = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent         = PlayerGui
+-- ════════════════════════════════════════════
+--  GUI ROOT
+-- ════════════════════════════════════════════
+if PGui:FindFirstChild("AngerMOD") then PGui:FindFirstChild("AngerMOD"):Destroy() end
 
--- ══════════════════════════════════════════════════════
+local Root = Instance.new("ScreenGui")
+Root.Name            = "AngerMOD"
+Root.ResetOnSpawn    = false
+Root.IgnoreGuiInset  = true
+Root.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
+Root.Parent          = PGui
+
+-- ════════════════════════════════════════════
 --  ФОНОВЫЙ ЭКРАН ОШИБКИ
--- ══════════════════════════════════════════════════════
-local ErrorBG = Instance.new("Frame")
-ErrorBG.Name             = "ErrorBG"
-ErrorBG.Size             = UDim2.new(1, 0, 1, 0)
-ErrorBG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-ErrorBG.ZIndex           = 1
-ErrorBG.Parent           = ScreenGui
+-- ════════════════════════════════════════════
+local EBG = Instance.new("Frame", Root)
+EBG.Size              = UDim2.new(1,0,1,0)
+EBG.BackgroundColor3  = Color3.fromRGB(0,0,0)
+EBG.ZIndex            = 1
 
-local errTextLbl = Instance.new("TextLabel")
-errTextLbl.Size                 = UDim2.new(1, 0, 1, 0)
-errTextLbl.BackgroundTransparency = 1
-errTextLbl.Text                 = string.rep("COPY KEY BEFORE OPEN GAME ERROR!! LOGIN ERROR!! COPY KEY BEFORE OPEN GAME ERROR!! LOGIN ERROR!!   ", 400)
-errTextLbl.TextColor3           = C.GOLD
-errTextLbl.TextSize             = 13
-errTextLbl.Font                 = Enum.Font.Code
-errTextLbl.TextWrapped          = true
-errTextLbl.TextXAlignment       = Enum.TextXAlignment.Left
-errTextLbl.TextYAlignment       = Enum.TextYAlignment.Top
-errTextLbl.ZIndex               = 2
-errTextLbl.Parent               = ErrorBG
+local ErrText = Instance.new("TextLabel", EBG)
+ErrText.Size          = UDim2.new(1,0,1,0)
+ErrText.BackgroundTransparency = 1
+ErrText.Text          = string.rep("COPY KEY BEFORE OPEN GAME  ERROR!! LOGIN ERROR!!  COPY KEY BEFORE OPEN GAME  ERROR!! LOGIN ERROR!!   ", 500)
+ErrText.TextColor3    = Color3.fromRGB(218,165,32)
+ErrText.TextSize      = 13
+ErrText.Font          = Enum.Font.Code
+ErrText.TextWrapped   = true
+ErrText.TextXAlignment = Enum.TextXAlignment.Left
+ErrText.TextYAlignment = Enum.TextYAlignment.Top
+ErrText.ZIndex        = 2
 
-local bigErrLbl = Instance.new("TextLabel")
-bigErrLbl.Size                  = UDim2.new(0.9, 0, 0.28, 0)
-bigErrLbl.Position              = UDim2.new(0.05, 0, 0.36, 0)
-bigErrLbl.BackgroundTransparency = 1
-bigErrLbl.Text                  = "ERROR LOGIN\nANGERMOD"
-bigErrLbl.TextColor3            = C.RED
-bigErrLbl.TextSize              = 72
-bigErrLbl.Font                  = Enum.Font.GothamBold
-bigErrLbl.TextStrokeColor3      = C.GOLD
-bigErrLbl.TextStrokeTransparency = 0.3
-bigErrLbl.ZIndex                = 3
-bigErrLbl.Parent                = ErrorBG
+local BigErr = Instance.new("TextLabel", EBG)
+BigErr.Size           = UDim2.new(1,0,0,160)
+BigErr.Position       = UDim2.new(0,0,0.35,0)
+BigErr.BackgroundTransparency = 1
+BigErr.Text           = "ERROR LOGIN\nANGERMOD"
+BigErr.TextColor3     = Color3.fromRGB(220,40,40)
+BigErr.TextSize       = 74
+BigErr.Font           = Enum.Font.GothamBold
+BigErr.TextStrokeColor3 = Color3.fromRGB(218,165,32)
+BigErr.TextStrokeTransparency = 0.4
+BigErr.ZIndex         = 3
 
-local verLblBG = Instance.new("TextLabel")
-verLblBG.Size                   = UDim2.new(1, 0, 0, 24)
-verLblBG.Position               = UDim2.new(0, 0, 1, -26)
-verLblBG.BackgroundTransparency = 1
-verLblBG.Text                   = "AngerMOD V-2  |  ROBLOX  |  " .. (keyFileLoaded and "key.txt загружен ✔" or "Встроенные ключи")
-verLblBG.TextColor3             = C.GOLD_DIM
-verLblBG.TextSize               = 12
-verLblBG.Font                   = Enum.Font.Code
-verLblBG.ZIndex                 = 3
-verLblBG.Parent                 = ErrorBG
-
--- Пульсация фона ошибки
+-- Пульсация
 RunService.Heartbeat:Connect(function()
     if not isLoggedIn then
-        local a = math.abs(math.sin(tick() * 1.8))
-        bigErrLbl.TextColor3        = Color3.fromRGB(255, 40 + a*80, 40)
-        bigErrLbl.TextTransparency  = 0.05 + a * 0.22
-        errTextLbl.TextTransparency = 0.52 + a * 0.22
+        local s = math.abs(math.sin(tick() * 2))
+        BigErr.TextColor3       = Color3.fromRGB(255, 40+s*70, 40)
+        BigErr.TextTransparency = s * 0.3
+        ErrText.TextTransparency = 0.5 + s*0.2
     end
 end)
 
--- ══════════════════════════════════════════════════════
---  ГЛАВНОЕ ОКНО
--- ══════════════════════════════════════════════════════
-local WIN_W, WIN_H = 500, 400
+-- ════════════════════════════════════════════
+--  ГЛАВНОЕ ОКНО  500 × 420
+-- ════════════════════════════════════════════
+local W, H = 500, 420
 
-local Win = Instance.new("Frame")
-Win.Name                 = "MainWindow"
-Win.Size                 = UDim2.new(0, WIN_W, 0, WIN_H)
-Win.Position             = UDim2.new(0.5, -WIN_W/2, 0.5, -WIN_H/2)
-Win.BackgroundColor3     = C.BG
-Win.BackgroundTransparency = 0.25
-Win.BorderSizePixel      = 0
-Win.ZIndex               = 10
-Win.Parent               = ScreenGui
+local Win = Instance.new("Frame", Root)
+Win.Name              = "Win"
+Win.Size              = UDim2.new(0,W,0,H)
+Win.Position          = UDim2.new(0.5,-W/2,0.5,-H/2)
+Win.BackgroundColor3  = Color3.fromRGB(10,10,10)
+Win.BackgroundTransparency = 0.22
+Win.BorderSizePixel   = 0
+Win.ZIndex            = 10
+Win.ClipsDescendants  = true
+Instance.new("UICorner",Win).CornerRadius = UDim.new(0,6)
 
-Instance.new("UICorner", Win).CornerRadius = UDim.new(0, 6)
+local WinStroke = Instance.new("UIStroke",Win)
+WinStroke.Color       = Color3.fromRGB(218,165,32)
+WinStroke.Thickness   = 1.5
 
-local winStroke = Instance.new("UIStroke", Win)
-winStroke.Color     = C.GOLD
-winStroke.Thickness = 1.5
+-- ════════════════════════════════════════════
+--  TITLEBAR
+-- ════════════════════════════════════════════
+local TBar = Instance.new("Frame", Win)
+TBar.Name             = "TBar"
+TBar.Size             = UDim2.new(1,0,0,34)
+TBar.BackgroundColor3 = Color3.fromRGB(5,5,5)
+TBar.BackgroundTransparency = 0.1
+TBar.BorderSizePixel  = 0
+TBar.ZIndex           = 11
 
--- ══════════════════════════════════════════════════════
---  ТАЙТЛБАР
--- ══════════════════════════════════════════════════════
-local TBar = Instance.new("Frame")
-TBar.Name                = "TitleBar"
-TBar.Size                = UDim2.new(1, 0, 0, 34)
-TBar.BackgroundColor3    = C.BG_TITLE
-TBar.BackgroundTransparency = 0.15
-TBar.BorderSizePixel     = 0
-TBar.ZIndex              = 11
-TBar.Parent              = Win
+-- Золотая линия под тайтлбаром
+local TLine = Instance.new("Frame", TBar)
+TLine.Size            = UDim2.new(1,0,0,1)
+TLine.Position        = UDim2.new(0,0,1,-1)
+TLine.BackgroundColor3 = Color3.fromRGB(218,165,32)
+TLine.BackgroundTransparency = 0.35
+TLine.BorderSizePixel = 0
+TLine.ZIndex          = 12
 
-Instance.new("UICorner", TBar).CornerRadius = UDim.new(0, 6)
-
--- Заглушка для нижних углов тайтлбара
-local tbFix = Instance.new("Frame", TBar)
-tbFix.Size               = UDim2.new(1, 0, 0.5, 0)
-tbFix.Position           = UDim2.new(0, 0, 0.5, 0)
-tbFix.BackgroundColor3   = C.BG_TITLE
-tbFix.BackgroundTransparency = 0.15
-tbFix.BorderSizePixel    = 0
-tbFix.ZIndex             = 11
-
--- Разделитель
-local divLine = Instance.new("Frame", TBar)
-divLine.Size             = UDim2.new(1, 0, 0, 1)
-divLine.Position         = UDim2.new(0, 0, 1, -1)
-divLine.BackgroundColor3 = C.GOLD
-divLine.BackgroundTransparency = 0.45
-divLine.BorderSizePixel  = 0
-divLine.ZIndex           = 12
-
--- Кнопка свернуть ▼
-local ArrowBtn = Instance.new("TextButton", TBar)
-ArrowBtn.Size            = UDim2.new(0, 28, 0, 24)
-ArrowBtn.Position        = UDim2.new(0, 5, 0.5, -12)
-ArrowBtn.BackgroundColor3 = C.GOLD
-ArrowBtn.BackgroundTransparency = 0.1
-ArrowBtn.Text            = "▼"
-ArrowBtn.TextColor3      = C.BLACK
-ArrowBtn.TextSize        = 11
-ArrowBtn.Font            = Enum.Font.GothamBold
-ArrowBtn.BorderSizePixel = 0
-ArrowBtn.ZIndex          = 13
-Instance.new("UICorner", ArrowBtn).CornerRadius = UDim.new(0, 3)
+-- Кнопка ▼ / ▶
+local BtnArrow = Instance.new("TextButton", TBar)
+BtnArrow.Size         = UDim2.new(0,26,0,22)
+BtnArrow.Position     = UDim2.new(0,5,0.5,-11)
+BtnArrow.BackgroundColor3 = Color3.fromRGB(218,165,32)
+BtnArrow.BackgroundTransparency = 0
+BtnArrow.Text         = "▼"
+BtnArrow.TextColor3   = Color3.fromRGB(0,0,0)
+BtnArrow.TextSize     = 11
+BtnArrow.Font         = Enum.Font.GothamBold
+BtnArrow.BorderSizePixel = 0
+BtnArrow.ZIndex       = 13
+Instance.new("UICorner",BtnArrow).CornerRadius = UDim.new(0,3)
 
 -- Название
 local TitleLbl = Instance.new("TextLabel", TBar)
-TitleLbl.Size            = UDim2.new(0, 270, 1, 0)
-TitleLbl.Position        = UDim2.new(0, 38, 0, 0)
+TitleLbl.Size         = UDim2.new(0,260,1,0)
+TitleLbl.Position     = UDim2.new(0,36,0,0)
 TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text            = "▶ AngerMOD V-2  |  ROBLOX 64BIT"
-TitleLbl.TextColor3      = C.GOLD
-TitleLbl.TextSize        = 12
-TitleLbl.Font            = Enum.Font.GothamBold
-TitleLbl.TextXAlignment  = Enum.TextXAlignment.Left
-TitleLbl.ZIndex          = 13
+TitleLbl.Text         = "▶  AngerMOD V-2  |  ROBLOX 64BIT"
+TitleLbl.TextColor3   = Color3.fromRGB(218,165,32)
+TitleLbl.TextSize     = 12
+TitleLbl.Font         = Enum.Font.GothamBold
+TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+TitleLbl.ZIndex       = 13
 
 -- FPS
 local FPSLbl = Instance.new("TextLabel", TBar)
-FPSLbl.Size              = UDim2.new(0, 90, 1, 0)
-FPSLbl.Position          = UDim2.new(1, -126, 0, 0)
+FPSLbl.Size           = UDim2.new(0,80,1,0)
+FPSLbl.Position       = UDim2.new(1,-112,0,0)
 FPSLbl.BackgroundTransparency = 1
-FPSLbl.Text              = "FPS: --"
-FPSLbl.TextColor3        = C.GREEN
-FPSLbl.TextSize          = 12
-FPSLbl.Font              = Enum.Font.Code
-FPSLbl.TextXAlignment    = Enum.TextXAlignment.Right
-FPSLbl.ZIndex            = 13
+FPSLbl.Text           = "FPS: --"
+FPSLbl.TextColor3     = Color3.fromRGB(30,210,80)
+FPSLbl.TextSize       = 12
+FPSLbl.Font           = Enum.Font.Code
+FPSLbl.TextXAlignment = Enum.TextXAlignment.Right
+FPSLbl.ZIndex         = 13
 
--- Закрыть X
-local XBtn = Instance.new("TextButton", TBar)
-XBtn.Size                = UDim2.new(0, 28, 0, 24)
-XBtn.Position            = UDim2.new(1, -33, 0.5, -12)
-XBtn.BackgroundColor3    = C.RED
-XBtn.BackgroundTransparency = 0.15
-XBtn.Text                = "✕"
-XBtn.TextColor3          = Color3.fromRGB(255, 255, 255)
-XBtn.TextSize            = 13
-XBtn.Font                = Enum.Font.GothamBold
-XBtn.BorderSizePixel     = 0
-XBtn.ZIndex              = 13
-Instance.new("UICorner", XBtn).CornerRadius = UDim.new(0, 3)
+-- Кнопка X
+local BtnX = Instance.new("TextButton", TBar)
+BtnX.Size             = UDim2.new(0,26,0,22)
+BtnX.Position         = UDim2.new(1,-31,0.5,-11)
+BtnX.BackgroundColor3 = Color3.fromRGB(180,30,30)
+BtnX.BackgroundTransparency = 0.1
+BtnX.Text             = "✕"
+BtnX.TextColor3       = Color3.fromRGB(255,255,255)
+BtnX.TextSize         = 12
+BtnX.Font             = Enum.Font.GothamBold
+BtnX.BorderSizePixel  = 0
+BtnX.ZIndex           = 13
+Instance.new("UICorner",BtnX).CornerRadius = UDim.new(0,3)
 
--- ══════════════════════════════════════════════════════
---  КОНТЕНТ
--- ══════════════════════════════════════════════════════
-local Content = Instance.new("Frame", Win)
-Content.Name             = "Content"
-Content.Size             = UDim2.new(1, 0, 1, -34)
-Content.Position         = UDim2.new(0, 0, 0, 34)
-Content.BackgroundTransparency = 1
-Content.ZIndex           = 11
+-- ════════════════════════════════════════════
+--  КОНТЕНТ (под тайтлбаром)
+-- ════════════════════════════════════════════
+local Body = Instance.new("Frame", Win)
+Body.Name             = "Body"
+Body.Size             = UDim2.new(1,0,1,-34)
+Body.Position         = UDim2.new(0,0,0,34)
+Body.BackgroundTransparency = 1
+Body.ZIndex           = 11
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  LOGIN FRAME
--- ══════════════════════════════════════════════════════
-local LoginF = Instance.new("Frame", Content)
-LoginF.Name              = "LoginFrame"
-LoginF.Size              = UDim2.new(1, -28, 1, -12)
-LoginF.Position          = UDim2.new(0, 14, 0, 8)
+-- ════════════════════════════════════════════
+local LoginF = Instance.new("Frame", Body)
+LoginF.Size           = UDim2.new(1,-24,1,-10)
+LoginF.Position       = UDim2.new(0,12,0,6)
 LoginF.BackgroundTransparency = 1
-LoginF.ZIndex            = 12
+LoginF.ZIndex         = 12
+LoginF.Visible        = true
 
-local function makeLoginLabel(text, posY, size, color, font)
-    local lbl = Instance.new("TextLabel", LoginF)
-    lbl.Size             = UDim2.new(1, 0, 0, size or 22)
-    lbl.Position         = UDim2.new(0, 0, 0, posY)
-    lbl.BackgroundTransparency = 1
-    lbl.Text             = text
-    lbl.TextColor3       = color or C.WHITE
-    lbl.TextSize         = 14
-    lbl.Font             = font or Enum.Font.Gotham
-    lbl.TextXAlignment   = Enum.TextXAlignment.Left
-    lbl.ZIndex           = 13
-    return lbl
-end
+-- Заголовок "Please PM Admin..."
+local L1 = Instance.new("TextLabel", LoginF)
+L1.Size               = UDim2.new(1,0,0,28)
+L1.Position           = UDim2.new(0,0,0,6)
+L1.BackgroundTransparency = 1
+L1.Text               = "Please PM Admin To Order Key"
+L1.TextColor3         = Color3.fromRGB(218,165,32)
+L1.TextSize           = 16
+L1.Font               = Enum.Font.GothamBold
+L1.TextXAlignment     = Enum.TextXAlignment.Left
+L1.ZIndex             = 13
 
-makeLoginLabel("Please PM Admin To Order Key", 6, 26, C.GOLD, Enum.Font.GothamBold)
-makeLoginLabel("Please Login (Copy Key)", 36, 22, C.WHITE, Enum.Font.Gotham)
+local L2 = Instance.new("TextLabel", LoginF)
+L2.Size               = UDim2.new(1,0,0,22)
+L2.Position           = UDim2.new(0,0,0,38)
+L2.BackgroundTransparency = 1
+L2.Text               = "Please Login (Copy Key)"
+L2.TextColor3         = Color3.fromRGB(200,200,200)
+L2.TextSize           = 13
+L2.Font               = Enum.Font.Gotham
+L2.TextXAlignment     = Enum.TextXAlignment.Left
+L2.ZIndex             = 13
 
--- Поле ввода ключа
+-- Поле ввода
 local KeyBox = Instance.new("TextBox", LoginF)
-KeyBox.Size              = UDim2.new(1, 0, 0, 36)
-KeyBox.Position          = UDim2.new(0, 0, 0, 64)
-KeyBox.BackgroundColor3  = Color3.fromRGB(5, 5, 5)
-KeyBox.BackgroundTransparency = 0.3
-KeyBox.Text              = ""
-KeyBox.PlaceholderText   = 'loadstring(game:HttpGet("https://..."))()'
-KeyBox.PlaceholderColor3 = C.GRAY
-KeyBox.TextColor3        = C.GOLD
-KeyBox.TextSize          = 12
-KeyBox.Font              = Enum.Font.Code
-KeyBox.ClearTextOnFocus  = false
-KeyBox.BorderSizePixel   = 0
-KeyBox.ZIndex            = 13
-Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 4)
-local kbStr = Instance.new("UIStroke", KeyBox)
-kbStr.Color = C.GOLD ; kbStr.Thickness = 1 ; kbStr.Transparency = 0.35
+KeyBox.Size           = UDim2.new(1,0,0,38)
+KeyBox.Position       = UDim2.new(0,0,0,66)
+KeyBox.BackgroundColor3 = Color3.fromRGB(4,4,4)
+KeyBox.BackgroundTransparency = 0.25
+KeyBox.Text           = ""
+KeyBox.PlaceholderText = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/..."))()'
+KeyBox.PlaceholderColor3 = Color3.fromRGB(80,80,80)
+KeyBox.TextColor3     = Color3.fromRGB(218,165,32)
+KeyBox.TextSize       = 11
+KeyBox.Font           = Enum.Font.Code
+KeyBox.ClearTextOnFocus = false
+KeyBox.BorderSizePixel = 0
+KeyBox.ZIndex         = 13
+Instance.new("UICorner",KeyBox).CornerRadius = UDim.new(0,4)
+local KBStroke = Instance.new("UIStroke",KeyBox)
+KBStroke.Color        = Color3.fromRGB(218,165,32)
+KBStroke.Thickness    = 1
+KBStroke.Transparency = 0.4
 
 -- ENTER LOGIN
-local EnterBtn = Instance.new("TextButton", LoginF)
-EnterBtn.Size            = UDim2.new(1, 0, 0, 38)
-EnterBtn.Position        = UDim2.new(0, 0, 0, 108)
-EnterBtn.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-EnterBtn.BackgroundTransparency = 0.28
-EnterBtn.Text            = "ENTER LOGIN"
-EnterBtn.TextColor3      = C.GOLD
-EnterBtn.TextSize        = 14
-EnterBtn.Font            = Enum.Font.GothamBold
-EnterBtn.BorderSizePixel = 0
-EnterBtn.ZIndex          = 13
-Instance.new("UICorner", EnterBtn).CornerRadius = UDim.new(0, 4)
-local ebStr = Instance.new("UIStroke", EnterBtn)
-ebStr.Color = C.GOLD ; ebStr.Thickness = 1.2
+local BtnEnter = Instance.new("TextButton", LoginF)
+BtnEnter.Size         = UDim2.new(1,0,0,40)
+BtnEnter.Position     = UDim2.new(0,0,0,112)
+BtnEnter.BackgroundColor3 = Color3.fromRGB(6,6,6)
+BtnEnter.BackgroundTransparency = 0.2
+BtnEnter.Text         = "ENTER LOGIN"
+BtnEnter.TextColor3   = Color3.fromRGB(218,165,32)
+BtnEnter.TextSize     = 14
+BtnEnter.Font         = Enum.Font.GothamBold
+BtnEnter.BorderSizePixel = 0
+BtnEnter.ZIndex       = 13
+Instance.new("UICorner",BtnEnter).CornerRadius = UDim.new(0,4)
+local EnterStroke = Instance.new("UIStroke",BtnEnter)
+EnterStroke.Color     = Color3.fromRGB(218,165,32)
+EnterStroke.Thickness = 1.3
 
 -- PASTE KEY
-local PasteBtn = Instance.new("TextButton", LoginF)
-PasteBtn.Size            = UDim2.new(1, 0, 0, 36)
-PasteBtn.Position        = UDim2.new(0, 0, 0, 152)
-PasteBtn.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-PasteBtn.BackgroundTransparency = 0.3
-PasteBtn.Text            = "PASTE KEY"
-PasteBtn.TextColor3      = C.GOLD
-PasteBtn.TextSize        = 13
-PasteBtn.Font            = Enum.Font.GothamBold
-PasteBtn.BorderSizePixel = 0
-PasteBtn.ZIndex          = 13
-Instance.new("UICorner", PasteBtn).CornerRadius = UDim.new(0, 4)
-local pbStr = Instance.new("UIStroke", PasteBtn)
-pbStr.Color = C.GOLD ; pbStr.Thickness = 1 ; pbStr.Transparency = 0.4
+local BtnPaste = Instance.new("TextButton", LoginF)
+BtnPaste.Size         = UDim2.new(1,0,0,38)
+BtnPaste.Position     = UDim2.new(0,0,0,158)
+BtnPaste.BackgroundColor3 = Color3.fromRGB(6,6,6)
+BtnPaste.BackgroundTransparency = 0.3
+BtnPaste.Text         = "PASTE KEY"
+BtnPaste.TextColor3   = Color3.fromRGB(218,165,32)
+BtnPaste.TextSize     = 13
+BtnPaste.Font         = Enum.Font.GothamBold
+BtnPaste.BorderSizePixel = 0
+BtnPaste.ZIndex       = 13
+Instance.new("UICorner",BtnPaste).CornerRadius = UDim.new(0,4)
+local PasteStroke = Instance.new("UIStroke",BtnPaste)
+PasteStroke.Color     = Color3.fromRGB(218,165,32)
+PasteStroke.Thickness = 1
+PasteStroke.Transparency = 0.45
 
 -- Статус
 local StatusLbl = Instance.new("TextLabel", LoginF)
-StatusLbl.Size           = UDim2.new(1, 0, 0, 28)
-StatusLbl.Position       = UDim2.new(0, 0, 0, 196)
+StatusLbl.Size        = UDim2.new(1,0,0,26)
+StatusLbl.Position    = UDim2.new(0,0,0,204)
 StatusLbl.BackgroundTransparency = 1
-StatusLbl.Text           = keyFileLoaded and "✔  key.txt загружен" or "⚠  key.txt не найден — используются встроенные ключи"
-StatusLbl.TextColor3     = keyFileLoaded and C.GREEN or C.GOLD
-StatusLbl.TextSize       = 12
-StatusLbl.Font           = Enum.Font.GothamBold
-StatusLbl.ZIndex         = 13
+StatusLbl.Text        = keyFileFound
+    and ("✔  key.txt загружен  [" .. #KEYS .. " ключей]")
+    or  ("⚠  key.txt не найден — используются встроенные ключи (" .. #KEYS .. " шт.)")
+StatusLbl.TextColor3  = keyFileFound and Color3.fromRGB(30,210,80) or Color3.fromRGB(218,165,32)
+StatusLbl.TextSize    = 12
+StatusLbl.Font        = Enum.Font.GothamBold
+StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
+StatusLbl.ZIndex      = 13
 
-local verLblLogin = Instance.new("TextLabel", LoginF)
-verLblLogin.Size         = UDim2.new(1, 0, 0, 18)
-verLblLogin.Position     = UDim2.new(0, 0, 0, 228)
-verLblLogin.BackgroundTransparency = 1
-verLblLogin.Text         = "Game Version : ROBLOX  |  AngerMOD V-2"
-verLblLogin.TextColor3   = C.GRAY
-verLblLogin.TextSize     = 11
-verLblLogin.Font         = Enum.Font.Code
-verLblLogin.TextXAlignment = Enum.TextXAlignment.Left
-verLblLogin.ZIndex       = 13
+local VerLbl = Instance.new("TextLabel", LoginF)
+VerLbl.Size           = UDim2.new(1,0,0,18)
+VerLbl.Position       = UDim2.new(0,0,0,234)
+VerLbl.BackgroundTransparency = 1
+VerLbl.Text           = "Game Version : ROBLOX  |  AngerMOD V-2"
+VerLbl.TextColor3     = Color3.fromRGB(100,100,100)
+VerLbl.TextSize       = 11
+VerLbl.Font           = Enum.Font.Code
+VerLbl.TextXAlignment = Enum.TextXAlignment.Left
+VerLbl.ZIndex         = 13
 
--- ══════════════════════════════════════════════════════
---  CHEAT MENU (после логина)
--- ══════════════════════════════════════════════════════
-local CheatMenu = Instance.new("Frame", Content)
-CheatMenu.Name           = "CheatMenu"
-CheatMenu.Size           = UDim2.new(1, 0, 1, 0)
-CheatMenu.BackgroundTransparency = 1
-CheatMenu.ZIndex         = 12
-CheatMenu.Visible        = false
+-- ════════════════════════════════════════════
+--  CHEAT MENU FRAME
+-- ════════════════════════════════════════════
+local CheatF = Instance.new("Frame", Body)
+CheatF.Size           = UDim2.new(1,0,1,0)
+CheatF.BackgroundTransparency = 1
+CheatF.ZIndex         = 12
+CheatF.Visible        = false
 
--- ТАБЫ (левая панель)
-local TabPanel = Instance.new("Frame", CheatMenu)
-TabPanel.Size            = UDim2.new(0, 100, 1, -6)
-TabPanel.Position        = UDim2.new(0, 6, 0, 3)
-TabPanel.BackgroundColor3 = C.BG_TITLE
-TabPanel.BackgroundTransparency = 0.3
+-- ── ЛЕВАЯ ПАНЕЛЬ (ТАБЫ) ──────────────────────
+local TabPanel = Instance.new("Frame", CheatF)
+TabPanel.Size         = UDim2.new(0,96,1,-8)
+TabPanel.Position     = UDim2.new(0,6,0,4)
+TabPanel.BackgroundColor3 = Color3.fromRGB(5,5,5)
+TabPanel.BackgroundTransparency = 0.25
 TabPanel.BorderSizePixel = 0
-TabPanel.ZIndex          = 13
-Instance.new("UICorner", TabPanel).CornerRadius = UDim.new(0, 4)
+TabPanel.ZIndex       = 13
+Instance.new("UICorner",TabPanel).CornerRadius = UDim.new(0,5)
+local TPStroke = Instance.new("UIStroke",TabPanel)
+TPStroke.Color        = Color3.fromRGB(218,165,32)
+TPStroke.Thickness    = 1
+TPStroke.Transparency = 0.65
 
-local tabListLayout = Instance.new("UIListLayout", TabPanel)
-tabListLayout.Padding    = UDim.new(0, 3)
-local tabPad = Instance.new("UIPadding", TabPanel)
-tabPad.PaddingTop        = UDim.new(0, 4)
-tabPad.PaddingLeft       = UDim.new(0, 4)
-tabPad.PaddingRight      = UDim.new(0, 4)
+local TabList = Instance.new("UIListLayout", TabPanel)
+TabList.Padding       = UDim.new(0,2)
+local TabPad = Instance.new("UIPadding", TabPanel)
+TabPad.PaddingTop     = UDim.new(0,4)
+TabPad.PaddingLeft    = UDim.new(0,4)
+TabPad.PaddingRight   = UDim.new(0,4)
 
--- Правая панель контента
-local RightPanel = Instance.new("Frame", CheatMenu)
-RightPanel.Size          = UDim2.new(1, -114, 1, -6)
-RightPanel.Position      = UDim2.new(0, 110, 0, 3)
-RightPanel.BackgroundColor3 = C.BG
-RightPanel.BackgroundTransparency = 0.4
-RightPanel.BorderSizePixel = 0
-RightPanel.ZIndex        = 13
-Instance.new("UICorner", RightPanel).CornerRadius = UDim.new(0, 4)
-local rpStr = Instance.new("UIStroke", RightPanel)
-rpStr.Color = C.GOLD ; rpStr.Thickness = 0.8 ; rpStr.Transparency = 0.6
+-- ── ПРАВАЯ ПАНЕЛЬ (контент) ──────────────────
+local ContentPanel = Instance.new("Frame", CheatF)
+ContentPanel.Size     = UDim2.new(1,-110,1,-8)
+ContentPanel.Position = UDim2.new(0,106,0,4)
+ContentPanel.BackgroundColor3 = Color3.fromRGB(7,7,7)
+ContentPanel.BackgroundTransparency = 0.3
+ContentPanel.BorderSizePixel = 0
+ContentPanel.ZIndex   = 13
+Instance.new("UICorner",ContentPanel).CornerRadius = UDim.new(0,5)
+local CPStroke = Instance.new("UIStroke",ContentPanel)
+CPStroke.Color        = Color3.fromRGB(218,165,32)
+CPStroke.Thickness    = 1
+CPStroke.Transparency = 0.65
 
--- Скролл для правой панели
-local RightScroll = Instance.new("ScrollingFrame", RightPanel)
-RightScroll.Size         = UDim2.new(1, -4, 1, -4)
-RightScroll.Position     = UDim2.new(0, 2, 0, 2)
-RightScroll.BackgroundTransparency = 1
-RightScroll.ScrollBarThickness = 3
-RightScroll.ScrollBarImageColor3 = C.GOLD
-RightScroll.ScrollBarImageTransparency = 0.35
-RightScroll.BorderSizePixel = 0
-RightScroll.ZIndex       = 14
-RightScroll.CanvasSize   = UDim2.new(0, 0, 0, 0)
+-- Скролл
+local Scroll = Instance.new("ScrollingFrame", ContentPanel)
+Scroll.Size           = UDim2.new(1,-2,1,-2)
+Scroll.Position       = UDim2.new(0,1,0,1)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 3
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(218,165,32)
+Scroll.ScrollBarImageTransparency = 0.4
+Scroll.BorderSizePixel = 0
+Scroll.ZIndex         = 14
+Scroll.CanvasSize     = UDim2.new(0,0,0,0)
 
-local scrollList = Instance.new("UIListLayout", RightScroll)
-scrollList.Padding       = UDim.new(0, 4)
-local scrollPad = Instance.new("UIPadding", RightScroll)
-scrollPad.PaddingTop     = UDim.new(0, 4)
-scrollPad.PaddingLeft    = UDim.new(0, 4)
-scrollPad.PaddingRight   = UDim.new(0, 4)
-scrollPad.PaddingBottom  = UDim.new(0, 6)
+local ScrList = Instance.new("UIListLayout", Scroll)
+ScrList.Padding       = UDim.new(0,3)
+local ScrPad = Instance.new("UIPadding", Scroll)
+ScrPad.PaddingTop     = UDim.new(0,5)
+ScrPad.PaddingLeft    = UDim.new(0,5)
+ScrPad.PaddingRight   = UDim.new(0,5)
+ScrPad.PaddingBottom  = UDim.new(0,6)
 
-scrollList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    RightScroll.CanvasSize = UDim2.new(0, 0, 0, scrollList.AbsoluteContentSize.Y + 14)
+ScrList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0,0,0,ScrList.AbsoluteContentSize.Y + 14)
 end)
 
--- ─────────────────────────────────────────────────────
---  СОЗДАНИЕ ТАБА
--- ─────────────────────────────────────────────────────
-local tabButtons    = {}
-local tabContents   = {}
+-- ════════════════════════════════════════════
+--  ФАБРИКА ВИДЖЕТОВ
+-- ════════════════════════════════════════════
 
-local function createTab(icon, label)
-    local btn = Instance.new("TextButton", TabPanel)
-    btn.Size             = UDim2.new(1, 0, 0, 34)
-    btn.BackgroundColor3 = C.BG_TAB
-    btn.BackgroundTransparency = 0.3
-    btn.Text             = icon .. "\n" .. label
-    btn.TextColor3       = C.GRAY
-    btn.TextSize         = 10
-    btn.Font             = Enum.Font.GothamBold
-    btn.BorderSizePixel  = 0
-    btn.ZIndex           = 14
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 3)
-
-    tabButtons[label] = btn
-    tabContents[label] = {}
-    return btn
-end
-
--- ─────────────────────────────────────────────────────
---  ВИДЖЕТЫ В ПРАВОЙ ПАНЕЛИ
--- ─────────────────────────────────────────────────────
-local currentTabWidgets = {}  -- список Frame для скрытия/показа
-
--- Секция-заголовок
-local function makeSection(text)
-    local f = Instance.new("Frame", RightScroll)
-    f.Size               = UDim2.new(1, -4, 0, 20)
+-- Заголовок секции
+local function mkSection(txt)
+    local f = Instance.new("Frame")
+    f.Size              = UDim2.new(1,-2,0,18)
     f.BackgroundTransparency = 1
-    f.ZIndex             = 15
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Size             = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text             = "─── " .. text .. " ───"
-    lbl.TextColor3       = C.GOLD
-    lbl.TextSize         = 11
-    lbl.Font             = Enum.Font.GothamBold
-    lbl.TextXAlignment   = Enum.TextXAlignment.Left
-    lbl.ZIndex           = 16
-    f.Visible            = false
+    f.ZIndex            = 15
+    local l = Instance.new("TextLabel",f)
+    l.Size              = UDim2.new(1,0,1,0)
+    l.BackgroundTransparency = 1
+    l.Text              = "── " .. txt .. " ──"
+    l.TextColor3        = Color3.fromRGB(218,165,32)
+    l.TextSize          = 11
+    l.Font              = Enum.Font.GothamBold
+    l.TextXAlignment    = Enum.TextXAlignment.Left
+    l.ZIndex            = 16
     return f
 end
 
--- Тогл с колбэком
-local function makeToggle(label, desc, cheatKey, callback)
-    local state = Cheats[cheatKey]
+-- Тогл с подписью и колбэком
+local function mkToggle(icon, name, desc, key, cb)
+    local on = CH[key]
 
-    local row = Instance.new("Frame", RightScroll)
-    row.Size             = UDim2.new(1, -4, 0, desc and 46 or 34)
-    row.BackgroundColor3 = C.BG_ROW
-    row.BackgroundTransparency = 0.38
-    row.BorderSizePixel  = 0
-    row.ZIndex           = 15
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
-    local rStr = Instance.new("UIStroke", row)
-    rStr.Color = C.GOLD ; rStr.Thickness = 0.5 ; rStr.Transparency = 0.72
+    local row = Instance.new("Frame")
+    row.Size            = UDim2.new(1,-2,0, desc and 44 or 32)
+    row.BackgroundColor3 = Color3.fromRGB(12,12,12)
+    row.BackgroundTransparency = 0.35
+    row.BorderSizePixel = 0
+    row.ZIndex          = 15
+    Instance.new("UICorner",row).CornerRadius = UDim.new(0,4)
+    local rStr = Instance.new("UIStroke",row)
+    rStr.Color          = Color3.fromRGB(218,165,32)
+    rStr.Thickness      = 0.6
+    rStr.Transparency   = 0.78
 
-    local nameLbl = Instance.new("TextLabel", row)
-    nameLbl.Size         = UDim2.new(1, -70, 0, 20)
-    nameLbl.Position     = UDim2.new(0, 9, 0, desc and 4 or 7)
+    local nameLbl = Instance.new("TextLabel",row)
+    nameLbl.Size        = UDim2.new(1,-68,0,18)
+    nameLbl.Position    = UDim2.new(0,8,0,desc and 4 or 7)
     nameLbl.BackgroundTransparency = 1
-    nameLbl.Text         = label
-    nameLbl.TextColor3   = state and C.GOLD or C.WHITE
-    nameLbl.TextSize     = 13
-    nameLbl.Font         = Enum.Font.GothamBold
+    nameLbl.Text        = icon .. "  " .. name
+    nameLbl.TextColor3  = on and Color3.fromRGB(218,165,32) or Color3.fromRGB(210,210,210)
+    nameLbl.TextSize    = 13
+    nameLbl.Font        = Enum.Font.GothamBold
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-    nameLbl.ZIndex       = 16
+    nameLbl.ZIndex      = 16
 
     if desc then
-        local descLbl = Instance.new("TextLabel", row)
-        descLbl.Size     = UDim2.new(1, -70, 0, 16)
-        descLbl.Position = UDim2.new(0, 9, 0, 24)
-        descLbl.BackgroundTransparency = 1
-        descLbl.Text     = desc
-        descLbl.TextColor3 = C.GRAY
-        descLbl.TextSize = 10
-        descLbl.Font     = Enum.Font.Gotham
-        descLbl.TextXAlignment = Enum.TextXAlignment.Left
-        descLbl.ZIndex   = 16
+        local dLbl = Instance.new("TextLabel",row)
+        dLbl.Size       = UDim2.new(1,-68,0,14)
+        dLbl.Position   = UDim2.new(0,8,0,22)
+        dLbl.BackgroundTransparency = 1
+        dLbl.Text       = desc
+        dLbl.TextColor3 = Color3.fromRGB(100,100,100)
+        dLbl.TextSize   = 10
+        dLbl.Font       = Enum.Font.Gotham
+        dLbl.TextXAlignment = Enum.TextXAlignment.Left
+        dLbl.ZIndex     = 16
     end
 
-    local togBtn = Instance.new("TextButton", row)
-    togBtn.Size          = UDim2.new(0, 52, 0, 22)
-    togBtn.Position      = UDim2.new(1, -60, 0.5, -11)
-    togBtn.BackgroundColor3 = state and C.ON_COLOR or C.OFF_COLOR
-    togBtn.BackgroundTransparency = 0.12
-    togBtn.Text          = state and "ON" or "OFF"
-    togBtn.TextColor3    = state and C.BLACK or C.GRAY
-    togBtn.TextSize      = 11
-    togBtn.Font          = Enum.Font.GothamBold
-    togBtn.BorderSizePixel = 0
-    togBtn.ZIndex        = 16
-    Instance.new("UICorner", togBtn).CornerRadius = UDim.new(0, 3)
-    local tStr = Instance.new("UIStroke", togBtn)
-    tStr.Color = C.GOLD ; tStr.Thickness = 0.7 ; tStr.Transparency = 0.45
+    local btn = Instance.new("TextButton",row)
+    btn.Size            = UDim2.new(0,50,0,20)
+    btn.Position        = UDim2.new(1,-58,0.5,-10)
+    btn.BackgroundColor3 = on and Color3.fromRGB(218,165,32) or Color3.fromRGB(40,40,40)
+    btn.BackgroundTransparency = 0.1
+    btn.Text            = on and "ON" or "OFF"
+    btn.TextColor3      = on and Color3.fromRGB(0,0,0) or Color3.fromRGB(110,110,110)
+    btn.TextSize        = 11
+    btn.Font            = Enum.Font.GothamBold
+    btn.BorderSizePixel = 0
+    btn.ZIndex          = 16
+    Instance.new("UICorner",btn).CornerRadius = UDim.new(0,3)
+    local bStr = Instance.new("UIStroke",btn)
+    bStr.Color          = Color3.fromRGB(218,165,32)
+    bStr.Thickness      = 0.8
+    bStr.Transparency   = 0.5
 
-    togBtn.MouseButton1Click:Connect(function()
-        state           = not state
-        Cheats[cheatKey] = state
-        TweenService:Create(togBtn, TweenInfo.new(0.14), {
-            BackgroundColor3 = state and C.ON_COLOR or C.OFF_COLOR,
-            TextColor3       = state and C.BLACK or C.GRAY,
-        }):Play()
-        togBtn.Text      = state and "ON" or "OFF"
-        nameLbl.TextColor3 = state and C.GOLD or C.WHITE
-        if callback then callback(state) end
+    btn.MouseButton1Click:Connect(function()
+        on         = not on
+        CH[key]    = on
+        tween(btn, {
+            BackgroundColor3 = on and Color3.fromRGB(218,165,32) or Color3.fromRGB(40,40,40),
+            TextColor3       = on and Color3.fromRGB(0,0,0) or Color3.fromRGB(110,110,110),
+        })
+        btn.Text        = on and "ON" or "OFF"
+        nameLbl.TextColor3 = on and Color3.fromRGB(218,165,32) or Color3.fromRGB(210,210,210)
+        if cb then cb(on) end
     end)
 
-    row.Visible = false
     return row
 end
 
 -- Слайдер
-local function makeSlider(label, desc, cheatKey, minV, maxV, callback)
-    local val = Cheats[cheatKey] or minV
+local function mkSlider(icon, name, key, minV, maxV, cb)
+    local val = CH[key] or minV
 
-    local row = Instance.new("Frame", RightScroll)
-    row.Size             = UDim2.new(1, -4, 0, 58)
-    row.BackgroundColor3 = C.BG_ROW
-    row.BackgroundTransparency = 0.38
-    row.BorderSizePixel  = 0
-    row.ZIndex           = 15
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 4)
-    local rStr = Instance.new("UIStroke", row)
-    rStr.Color = C.GOLD ; rStr.Thickness = 0.5 ; rStr.Transparency = 0.72
+    local row = Instance.new("Frame")
+    row.Size            = UDim2.new(1,-2,0,52)
+    row.BackgroundColor3 = Color3.fromRGB(12,12,12)
+    row.BackgroundTransparency = 0.35
+    row.BorderSizePixel = 0
+    row.ZIndex          = 15
+    Instance.new("UICorner",row).CornerRadius = UDim.new(0,4)
+    local rStr = Instance.new("UIStroke",row)
+    rStr.Color          = Color3.fromRGB(218,165,32)
+    rStr.Thickness      = 0.6
+    rStr.Transparency   = 0.78
 
-    local nameLbl = Instance.new("TextLabel", row)
-    nameLbl.Size         = UDim2.new(1, -80, 0, 18)
-    nameLbl.Position     = UDim2.new(0, 9, 0, 5)
+    local nameLbl = Instance.new("TextLabel",row)
+    nameLbl.Size        = UDim2.new(1,-70,0,18)
+    nameLbl.Position    = UDim2.new(0,8,0,5)
     nameLbl.BackgroundTransparency = 1
-    nameLbl.Text         = label
-    nameLbl.TextColor3   = C.WHITE
-    nameLbl.TextSize     = 12
-    nameLbl.Font         = Enum.Font.GothamBold
+    nameLbl.Text        = icon .. "  " .. name
+    nameLbl.TextColor3  = Color3.fromRGB(210,210,210)
+    nameLbl.TextSize    = 12
+    nameLbl.Font        = Enum.Font.GothamBold
     nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-    nameLbl.ZIndex       = 16
+    nameLbl.ZIndex      = 16
 
-    local valLbl = Instance.new("TextLabel", row)
-    valLbl.Size          = UDim2.new(0, 60, 0, 18)
-    valLbl.Position      = UDim2.new(1, -68, 0, 5)
+    local valLbl = Instance.new("TextLabel",row)
+    valLbl.Size         = UDim2.new(0,60,0,18)
+    valLbl.Position     = UDim2.new(1,-66,0,5)
     valLbl.BackgroundTransparency = 1
-    valLbl.Text          = tostring(val)
-    valLbl.TextColor3    = C.GOLD
-    valLbl.TextSize      = 12
-    valLbl.Font          = Enum.Font.Code
+    valLbl.Text         = tostring(val)
+    valLbl.TextColor3   = Color3.fromRGB(218,165,32)
+    valLbl.TextSize     = 12
+    valLbl.Font         = Enum.Font.Code
     valLbl.TextXAlignment = Enum.TextXAlignment.Right
-    valLbl.ZIndex        = 16
+    valLbl.ZIndex       = 16
 
-    if desc then
-        local descLbl = Instance.new("TextLabel", row)
-        descLbl.Size     = UDim2.new(1, -12, 0, 14)
-        descLbl.Position = UDim2.new(0, 9, 0, 22)
-        descLbl.BackgroundTransparency = 1
-        descLbl.Text     = desc
-        descLbl.TextColor3 = C.GRAY
-        descLbl.TextSize = 10
-        descLbl.Font     = Enum.Font.Gotham
-        descLbl.TextXAlignment = Enum.TextXAlignment.Left
-        descLbl.ZIndex   = 16
-    end
-
-    -- Трек слайдера
-    local track = Instance.new("Frame", row)
-    track.Size           = UDim2.new(1, -18, 0, 6)
-    track.Position       = UDim2.new(0, 9, 0, 42)
-    track.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    local track = Instance.new("Frame",row)
+    track.Size          = UDim2.new(1,-16,0,5)
+    track.Position      = UDim2.new(0,8,0,36)
+    track.BackgroundColor3 = Color3.fromRGB(35,35,35)
     track.BackgroundTransparency = 0.2
     track.BorderSizePixel = 0
-    track.ZIndex         = 16
-    Instance.new("UICorner", track).CornerRadius = UDim.new(0, 3)
+    track.ZIndex        = 16
+    Instance.new("UICorner",track).CornerRadius = UDim.new(0,3)
 
-    local fill = Instance.new("Frame", track)
-    fill.Size            = UDim2.new((val - minV)/(maxV - minV), 0, 1, 0)
-    fill.BackgroundColor3 = C.GOLD
-    fill.BackgroundTransparency = 0.1
+    local fill = Instance.new("Frame",track)
+    fill.Size           = UDim2.new((val-minV)/(maxV-minV),0,1,0)
+    fill.BackgroundColor3 = Color3.fromRGB(218,165,32)
+    fill.BackgroundTransparency = 0.05
     fill.BorderSizePixel = 0
-    fill.ZIndex          = 17
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 3)
+    fill.ZIndex         = 17
+    Instance.new("UICorner",fill).CornerRadius = UDim.new(0,3)
 
-    local handle = Instance.new("TextButton", track)
-    handle.Size          = UDim2.new(0, 12, 0, 12)
-    handle.AnchorPoint   = Vector2.new(0.5, 0.5)
-    handle.Position      = UDim2.new((val - minV)/(maxV - minV), 0, 0.5, 0)
-    handle.BackgroundColor3 = C.GOLD
-    handle.BackgroundTransparency = 0
-    handle.Text          = ""
-    handle.BorderSizePixel = 0
-    handle.ZIndex        = 18
-    Instance.new("UICorner", handle).CornerRadius = UDim.new(0.5, 0)
+    local knob = Instance.new("TextButton",track)
+    knob.Size           = UDim2.new(0,11,0,11)
+    knob.AnchorPoint    = Vector2.new(0.5,0.5)
+    knob.Position       = UDim2.new((val-minV)/(maxV-minV),0,0.5,0)
+    knob.BackgroundColor3 = Color3.fromRGB(218,165,32)
+    knob.Text           = ""
+    knob.BorderSizePixel = 0
+    knob.ZIndex         = 18
+    Instance.new("UICorner",knob).CornerRadius = UDim.new(0.5,0)
 
-    -- Перетаскивание слайдера
     local dragging = false
-    handle.MouseButton1Down:Connect(function() dragging = true end)
-    track.MouseButton1Down:Connect(function(_, x, _)
-        dragging = true
-        local rel = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        val = math.floor(minV + (maxV - minV) * rel)
-        Cheats[cheatKey] = val
-        fill.Size        = UDim2.new(rel, 0, 1, 0)
-        handle.Position  = UDim2.new(rel, 0, 0.5, 0)
-        valLbl.Text      = tostring(val)
-        if callback then callback(val) end
+
+    local function setVal(absX)
+        local rel = math.clamp((absX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+        val             = math.floor(minV + (maxV-minV)*rel)
+        CH[key]         = val
+        fill.Size       = UDim2.new(rel,0,1,0)
+        knob.Position   = UDim2.new(rel,0,0.5,0)
+        valLbl.Text     = tostring(val)
+        if cb then cb(val) end
+    end
+
+    knob.MouseButton1Down:Connect(function() dragging = true end)
+    track.MouseButton1Down:Connect(function() dragging = true end)
+
+    UserInputService.InputChanged:Connect(function(inp)
+        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+            setVal(inp.Position.X)
+        end
     end)
     UserInputService.InputEnded:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
-    UserInputService.InputChanged:Connect(function(inp)
-        if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local rel = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-            val = math.floor(minV + (maxV - minV) * rel)
-            Cheats[cheatKey] = val
-            fill.Size        = UDim2.new(rel, 0, 1, 0)
-            handle.Position  = UDim2.new(rel, 0, 0.5, 0)
-            valLbl.Text      = tostring(val)
-            if callback then callback(val) end
-        end
-    end)
 
-    row.Visible = false
     return row
 end
 
--- ─────────────────────────────────────────────────────
---  РЕГИСТРАЦИЯ ТАБОВ
--- ─────────────────────────────────────────────────────
-local tabDefs = {
-    { icon="🎯", label="AIMBOT"   },
-    { icon="👁", label="VISUALS"  },
-    { icon="⚡", label="MOVEMENT" },
-    { icon="🔧", label="MISC"     },
+-- ════════════════════════════════════════════
+--  СИСТЕМА ТАБОВ
+-- ════════════════════════════════════════════
+local tabs     = {}   -- tabs[name] = {btn, widgets={}}
+local activeTab = nil
+
+local TAB_DEFS = {
+    {icon="🎯", name="AIMBOT"},
+    {icon="👁",  name="VISUALS"},
+    {icon="⚡", name="MOVEMENT"},
+    {icon="🔧", name="MISC"},
 }
 
-local widgetsByTab = {}   -- widgetsByTab[label] = {frame1, frame2, ...}
+for _, def in ipairs(TAB_DEFS) do
+    -- Кнопка таба
+    local btn = Instance.new("TextButton", TabPanel)
+    btn.Size            = UDim2.new(1,0,0,38)
+    btn.BackgroundColor3 = Color3.fromRGB(12,12,12)
+    btn.BackgroundTransparency = 0.3
+    btn.Text            = def.icon .. "\n" .. def.name
+    btn.TextColor3      = Color3.fromRGB(100,100,100)
+    btn.TextSize        = 10
+    btn.Font            = Enum.Font.GothamBold
+    btn.BorderSizePixel = 0
+    btn.ZIndex          = 14
+    Instance.new("UICorner",btn).CornerRadius = UDim.new(0,4)
 
-for _, def in ipairs(tabDefs) do
-    widgetsByTab[def.label] = {}
-    createTab(def.icon, def.label)
-end
+    tabs[def.name] = {btn=btn, widgets={}}
 
--- Функции регистрации виджетов в таб
-local function addToTab(tabLabel, widget)
-    table.insert(widgetsByTab[tabLabel], widget)
-end
-
--- ─────────────────────────────────────────────────────
---  НАПОЛНЕНИЕ ТАБОВ ВИДЖЕТАМИ
--- ─────────────────────────────────────────────────────
-
--- ── AIMBOT ──────────────────────────────────────────
-local secAim1 = makeSection("AIMBOT SETTINGS")
-addToTab("AIMBOT", secAim1)
-
-addToTab("AIMBOT", makeToggle("🎯  Aimbot", "Автоматическая наводка на врага", "Aimbot", nil))
-addToTab("AIMBOT", makeToggle("🤖  Auto Aim", "Плавная наводка при прицеливании", "AutoAim", nil))
-addToTab("AIMBOT", makeToggle("🔇  Silent Aim", "Невидимое изменение траектории пули", "SilentAim", nil))
-
-local secAim2 = makeSection("FOV НАСТРОЙКИ")
-addToTab("AIMBOT", secAim2)
-
-addToTab("AIMBOT", makeToggle("⭕  FOV Circle", "Показывает круг зоны наводки", "AimFOV", nil))
-addToTab("AIMBOT", makeSlider("📐  FOV Радиус", "Радиус зоны автоприцела (пикс.)", "AimFOVRadius", 30, 400, nil))
-
--- ── VISUALS ──────────────────────────────────────────
-local secVisSep = makeSection("ESP")
-addToTab("VISUALS", secVisSep)
-
-addToTab("VISUALS", makeToggle("📦  ESP Boxes", "Рамка вокруг врагов", "ESPBoxes", function(v)
-    if not v then
-        for _, obj in pairs(espObjects) do
-            if obj then pcall(function() obj:Destroy() end) end
+    btn.MouseButton1Click:Connect(function()
+        -- Деактивируем все
+        for tname, tdata in pairs(tabs) do
+            tdata.btn.TextColor3 = Color3.fromRGB(100,100,100)
+            tween(tdata.btn, {BackgroundTransparency=0.3, BackgroundColor3=Color3.fromRGB(12,12,12)})
+            local s = tdata.btn:FindFirstChildOfClass("UIStroke")
+            if s then s:Destroy() end
+            for _, w in ipairs(tdata.widgets) do w.Parent = nil end
         end
-        espObjects = {}
-    end
-end))
-
-addToTab("VISUALS", makeToggle("🏷  Enemy Names", "Имена игроков над головой", "EnemyNames", nil))
-addToTab("VISUALS", makeToggle("🩸  Health Bar", "Полоска HP врага", "HealthBar", nil))
-
-local secVisRadar = makeSection("RADAR")
-addToTab("VISUALS", secVisRadar)
-
-addToTab("VISUALS", makeToggle("📍  Radar", "Мини-радар с врагами", "Radar", nil))
-
--- ── MOVEMENT ──────────────────────────────────────────
-local secMov1 = makeSection("СКОРОСТЬ")
-addToTab("MOVEMENT", secMov1)
-
-addToTab("MOVEMENT", makeToggle("⚡  Speed Hack", "Увеличенная скорость передвижения", "SpeedHack", function(v)
-    local hum = getHum()
-    if not hum then return end
-    if v then
-        originalSpeed = hum.WalkSpeed
-        hum.WalkSpeed = Cheats.SpeedValue
-    else
-        hum.WalkSpeed = originalSpeed or 16
-    end
-end))
-
-addToTab("MOVEMENT", makeSlider("🏃  Walk Speed", "Скорость ходьбы", "SpeedValue", 16, 200, function(v)
-    if Cheats.SpeedHack then
-        local hum = getHum()
-        if hum then hum.WalkSpeed = v end
-    end
-end))
-
-local secMov2 = makeSection("ПРЫЖОК / ПОЛЁТ")
-addToTab("MOVEMENT", secMov2)
-
-addToTab("MOVEMENT", makeToggle("🦘  Infinite Jump", "Бесконечный прыжок", "InfiniteJump", nil))
-addToTab("MOVEMENT", makeToggle("🌀  No Clip", "Проходить сквозь стены", "NoClip", nil))
-addToTab("MOVEMENT", makeToggle("🦅  Fly Mode", "Режим полёта (Space - вверх, Shift - вниз)", "FlyMode", function(v)
-    local hrp = getHRP()
-    if not hrp then return end
-    if v then
-        flyBodyForce = Instance.new("BodyVelocity", hrp)
-        flyBodyForce.Velocity      = Vector3.zero
-        flyBodyForce.MaxForce      = Vector3.new(1e5, 1e5, 1e5)
-        flyBodyGyro = Instance.new("BodyGyro", hrp)
-        flyBodyGyro.D              = 100
-        flyBodyGyro.P              = 1e4
-        flyBodyGyro.MaxTorque      = Vector3.new(1e5, 1e5, 1e5)
-    else
-        if flyBodyForce then flyBodyForce:Destroy() ; flyBodyForce = nil end
-        if flyBodyGyro  then flyBodyGyro:Destroy()  ; flyBodyGyro  = nil end
-    end
-end))
-
--- ── MISC ──────────────────────────────────────────
-local secMisc1 = makeSection("ОРУЖИЕ")
-addToTab("MISC", secMisc1)
-
-addToTab("MISC", makeToggle("🔫  No Recoil", "Убирает отдачу при стрельбе", "NoRecoil", nil))
-
-local secMisc2 = makeSection("ЗАЩИТА")
-addToTab("MISC", secMisc2)
-
-addToTab("MISC", makeToggle("🛡  Anti-Ban", "Защита аккаунта от бана", "AntiBan", nil))
-addToTab("MISC", makeToggle("💤  Anti-AFK", "Предотвращает кик за AFK", "AntiAFK", function(v)
-    -- реализуется через VirtualUser ниже
-end))
-
-local secMisc3 = makeSection("ИНФОРМАЦИЯ")
-addToTab("MISC", secMisc3)
-
--- Статус-виджет (только для MISC)
-local infoRow = Instance.new("Frame", RightScroll)
-infoRow.Size             = UDim2.new(1, -4, 0, 70)
-infoRow.BackgroundColor3 = C.BG_ROW
-infoRow.BackgroundTransparency = 0.38
-infoRow.BorderSizePixel  = 0
-infoRow.ZIndex           = 15
-Instance.new("UICorner", infoRow).CornerRadius = UDim.new(0, 4)
-local iStr = Instance.new("UIStroke", infoRow)
-iStr.Color = C.GOLD ; iStr.Thickness = 0.5 ; iStr.Transparency = 0.7
-
-local infoLbl = Instance.new("TextLabel", infoRow)
-infoLbl.Size             = UDim2.new(1, -12, 1, -8)
-infoLbl.Position         = UDim2.new(0, 6, 0, 4)
-infoLbl.BackgroundTransparency = 1
-infoLbl.Text             = "⚙ AngerMOD V-2\n👤 " .. LocalPlayer.Name .. "\n🔑 key.txt: " .. (keyFileLoaded and "загружен" or "не найден")
-infoLbl.TextColor3       = C.WHITE
-infoLbl.TextSize         = 11
-infoLbl.Font             = Enum.Font.Code
-infoLbl.TextXAlignment   = Enum.TextXAlignment.Left
-infoLbl.TextYAlignment   = Enum.TextYAlignment.Top
-infoLbl.ZIndex           = 16
-infoRow.Visible          = false
-addToTab("MISC", infoRow)
-
--- ─────────────────────────────────────────────────────
---  ПЕРЕКЛЮЧЕНИЕ ТАБОВ
--- ─────────────────────────────────────────────────────
-local function switchTab(label)
-    activeTab = label
-    -- Скрываем все виджеты
-    for tab, widgets in pairs(widgetsByTab) do
-        for _, w in ipairs(widgets) do
-            w.Visible = false
+        -- Активируем нужный
+        activeTab = def.name
+        btn.TextColor3 = Color3.fromRGB(218,165,32)
+        tween(btn, {BackgroundTransparency=0.1, BackgroundColor3=Color3.fromRGB(22,17,3)})
+        local ns = Instance.new("UIStroke",btn)
+        ns.Color = Color3.fromRGB(218,165,32); ns.Thickness=1; ns.Transparency=0.35
+        for _, w in ipairs(tabs[def.name].widgets) do
+            w.Parent = Scroll
         end
-        if tabButtons[tab] then
-            tabButtons[tab].TextColor3       = C.GRAY
-            tabButtons[tab].BackgroundColor3 = C.BG_TAB
-            TweenService:Create(tabButtons[tab], TweenInfo.new(0.12), {
-                BackgroundTransparency = 0.3,
-            }):Play()
-        end
-    end
-    -- Показываем нужные
-    for _, w in ipairs(widgetsByTab[label] or {}) do
-        w.Visible = true
-    end
-    if tabButtons[label] then
-        tabButtons[label].TextColor3 = C.GOLD
-        TweenService:Create(tabButtons[label], TweenInfo.new(0.12), {
-            BackgroundColor3    = C.BG_ACTIVE,
-            BackgroundTransparency = 0.15,
-        }):Play()
-        local str = tabButtons[label]:FindFirstChildOfClass("UIStroke")
-        if str then str:Destroy() end
-        local newStr = Instance.new("UIStroke", tabButtons[label])
-        newStr.Color = C.GOLD ; newStr.Thickness = 1 ; newStr.Transparency = 0.3
-    end
-end
-
-for _, def in ipairs(tabDefs) do
-    tabButtons[def.label].MouseButton1Click:Connect(function()
-        switchTab(def.label)
+        Scroll.CanvasPosition = Vector2.zero
     end)
 end
 
--- ══════════════════════════════════════════════════════
---  РАДАР (мини-карта)
--- ══════════════════════════════════════════════════════
-local RadarFrame = Instance.new("Frame", ScreenGui)
-RadarFrame.Name              = "Radar"
-RadarFrame.Size              = UDim2.new(0, 120, 0, 120)
-RadarFrame.Position          = UDim2.new(1, -134, 1, -134)
-RadarFrame.BackgroundColor3  = Color3.fromRGB(5, 5, 5)
-RadarFrame.BackgroundTransparency = 0.35
-RadarFrame.BorderSizePixel   = 0
-RadarFrame.ZIndex            = 20
-RadarFrame.Visible           = false
-Instance.new("UICorner", RadarFrame).CornerRadius = UDim.new(0.5, 0)
-local radarStr = Instance.new("UIStroke", RadarFrame)
-radarStr.Color = C.GOLD ; radarStr.Thickness = 1.5
-
--- Крест в центре
-local function makeLine(parent, sx, sy, px, py)
-    local l = Instance.new("Frame", parent)
-    l.Size               = UDim2.new(sx, 0, sy, 0)
-    l.Position           = UDim2.new(px, 0, py, 0)
-    l.BackgroundColor3   = C.GOLD
-    l.BackgroundTransparency = 0.55
-    l.BorderSizePixel    = 0
-    l.ZIndex             = 21
-end
-makeLine(RadarFrame, 1, 0, 0.5, 0, 0, 0)     -- вертикаль
-makeLine(RadarFrame, 0, 1, 0, 0, 0.5, 0)     -- горизонталь
-
--- Точка игрока
-local playerDot = Instance.new("Frame", RadarFrame)
-playerDot.Size               = UDim2.new(0, 8, 0, 8)
-playerDot.Position           = UDim2.new(0.5, -4, 0.5, -4)
-playerDot.BackgroundColor3   = C.GREEN
-playerDot.BorderSizePixel    = 0
-playerDot.ZIndex             = 23
-Instance.new("UICorner", playerDot).CornerRadius = UDim.new(0.5, 0)
-
--- ══════════════════════════════════════════════════════
---  FOV CIRCLE
--- ══════════════════════════════════════════════════════
-local FOVCircle = Instance.new("Frame", ScreenGui)
-FOVCircle.Name               = "FOVCircle"
-FOVCircle.BackgroundTransparency = 1
-FOVCircle.BorderSizePixel    = 0
-FOVCircle.ZIndex             = 20
-FOVCircle.Visible            = false
-
-local fovStroke = Instance.new("UIStroke", FOVCircle)
-fovStroke.Color              = C.GOLD
-fovStroke.Thickness          = 1.5
-fovStroke.Transparency       = 0.3
-Instance.new("UICorner", FOVCircle).CornerRadius = UDim.new(0.5, 0)
-
-local function updateFOVCircle()
-    local r = Cheats.AimFOVRadius
-    local cx = Camera.ViewportSize.X / 2
-    local cy = Camera.ViewportSize.Y / 2
-    FOVCircle.Size     = UDim2.new(0, r*2, 0, r*2)
-    FOVCircle.Position = UDim2.new(0, cx - r, 0, cy - r)
+local function addWidget(tabName, widget)
+    table.insert(tabs[tabName].widgets, widget)
+    widget.Parent = nil  -- скрыто пока не активен таб
 end
 
--- ══════════════════════════════════════════════════════
---  MAIN LOOP (рендер)
--- ══════════════════════════════════════════════════════
-local radarDots = {}
+-- ════════════════════════════════════════════
+--  ЗАПОЛНЕНИЕ ТАБОВ
+-- ════════════════════════════════════════════
 
+-- ── AIMBOT ──────────────────────────────────
+addWidget("AIMBOT", mkSection("AIMBOT"))
+addWidget("AIMBOT", mkToggle("🎯","Aimbot","Жёсткая мгновенная наводка на ближайшего врага","Aimbot",nil))
+addWidget("AIMBOT", mkToggle("🤖","Auto Aim","Плавная наводка камеры при стрельбе","AutoAim",nil))
+addWidget("AIMBOT", mkToggle("🔇","Silent Aim","Пуля летит в врага без видимого поворота","SilentAim",nil))
+addWidget("AIMBOT", mkSection("FOV"))
+addWidget("AIMBOT", mkToggle("⭕","FOV Circle","Показывает круг зоны автоприцела","FOVCircle",nil))
+addWidget("AIMBOT", mkSlider("📐","FOV Radius","FOVRadius",30,400,nil))
+
+-- ── VISUALS ─────────────────────────────────
+addWidget("VISUALS", mkSection("ESP"))
+addWidget("VISUALS", mkToggle("📦","ESP Boxes","Золотая рамка вокруг врагов","ESPBoxes",function(v)
+    if not v then
+        for _, obj in pairs(espCache) do
+            for _, item in pairs(obj) do pcall(function() item:Destroy() end) end
+        end
+        espCache = {}
+    end
+end))
+addWidget("VISUALS", mkToggle("🏷","Enemy Names","Имена игроков над рамкой","ESPNames",nil))
+addWidget("VISUALS", mkToggle("🩸","Health Bar","Полоска HP слева от рамки","ESPHealth",nil))
+addWidget("VISUALS", mkToggle("📏","Tracers","Линия от низа экрана к врагу","ESPTracer",nil))
+addWidget("VISUALS", mkSection("RADAR"))
+addWidget("VISUALS", mkToggle("📍","Mini Radar","Круглый радар с точками врагов","Radar",nil))
+
+-- ── MOVEMENT ────────────────────────────────
+addWidget("MOVEMENT", mkSection("СКОРОСТЬ"))
+addWidget("MOVEMENT", mkToggle("⚡","Speed Hack","Повышенная скорость персонажа","SpeedHack",function(v)
+    local hum = getHum()
+    if not hum then return end
+    if v then origSpeed=hum.WalkSpeed; hum.WalkSpeed=CH.WalkSpeed
+    else hum.WalkSpeed=origSpeed end
+end))
+addWidget("MOVEMENT", mkSlider("🏃","Walk Speed","WalkSpeed",16,250,function(v)
+    if CH.SpeedHack then local hum=getHum(); if hum then hum.WalkSpeed=v end end
+end))
+addWidget("MOVEMENT", mkSection("ПРЫЖОК / ПОЛЁТ"))
+addWidget("MOVEMENT", mkToggle("🦘","Infinite Jump","Прыгать без ограничений","InfJump",nil))
+addWidget("MOVEMENT", mkToggle("🌀","No Clip","Проходить сквозь стены","NoClip",nil))
+addWidget("MOVEMENT", mkToggle("🦅","Fly Mode","WASD = направление | Space = вверх | Shift = вниз","Fly",function(v)
+    local hrp = getHRP()
+    if not hrp then return end
+    if v then
+        flyVel = Instance.new("BodyVelocity",hrp)
+        flyVel.Velocity   = Vector3.zero
+        flyVel.MaxForce   = Vector3.new(1e5,1e5,1e5)
+        flyGyro = Instance.new("BodyGyro",hrp)
+        flyGyro.D         = 100
+        flyGyro.P         = 1e4
+        flyGyro.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    else
+        if flyVel  then flyVel:Destroy();  flyVel=nil end
+        if flyGyro then flyGyro:Destroy(); flyGyro=nil end
+    end
+end))
+
+-- ── MISC ────────────────────────────────────
+addWidget("MISC", mkSection("ОРУЖИЕ"))
+addWidget("MISC", mkToggle("🔫","No Recoil","Убирает отдачу при стрельбе","NoRecoil",nil))
+addWidget("MISC", mkSection("ЗАЩИТА"))
+addWidget("MISC", mkToggle("🛡","Anti-Ban","Базовая защита от обнаружения","AntiBan",nil))
+addWidget("MISC", mkToggle("💤","Anti-AFK","Предотвращает кик за AFK","AntiAFK",nil))
+addWidget("MISC", mkSection("ВИЗУАЛ"))
+addWidget("MISC", mkToggle("☀","Full Bright","Максимальная яркость окружения","FullBright",function(v)
+    local lighting = game:GetService("Lighting")
+    lighting.Brightness = v and 10 or 1
+    lighting.GlobalShadows = not v
+end))
+addWidget("MISC", mkSection("ИНФОРМАЦИЯ"))
+
+local infoRow = Instance.new("Frame")
+infoRow.Size            = UDim2.new(1,-2,0,58)
+infoRow.BackgroundColor3 = Color3.fromRGB(12,12,12)
+infoRow.BackgroundTransparency = 0.35
+infoRow.BorderSizePixel = 0
+infoRow.ZIndex          = 15
+Instance.new("UICorner",infoRow).CornerRadius = UDim.new(0,4)
+local iStr = Instance.new("UIStroke",infoRow)
+iStr.Color=Color3.fromRGB(218,165,32); iStr.Thickness=0.6; iStr.Transparency=0.75
+
+local iLbl = Instance.new("TextLabel",infoRow)
+iLbl.Size               = UDim2.new(1,-12,1,-8)
+iLbl.Position           = UDim2.new(0,6,0,4)
+iLbl.BackgroundTransparency = 1
+iLbl.Text               = "⚙  AngerMOD V-2  |  ROBLOX\n👤  " .. LP.Name ..
+                          "\n🔑  key.txt: " .. (keyFileFound and ("загружен [" .. #KEYS .. " ключей]") or "не найден (fallback)")
+iLbl.TextColor3         = Color3.fromRGB(200,200,200)
+iLbl.TextSize           = 11
+iLbl.Font               = Enum.Font.Code
+iLbl.TextXAlignment     = Enum.TextXAlignment.Left
+iLbl.TextYAlignment     = Enum.TextYAlignment.Top
+iLbl.ZIndex             = 16
+
+addWidget("MISC", infoRow)
+
+-- ════════════════════════════════════════════
+--  ВНЕШНИЕ ЭЛЕМЕНТЫ (поверх игры)
+-- ════════════════════════════════════════════
+
+-- FOV Circle
+local FOVFrame = Instance.new("Frame",Root)
+FOVFrame.BackgroundTransparency = 1
+FOVFrame.BorderSizePixel = 0
+FOVFrame.ZIndex         = 20
+FOVFrame.Visible        = false
+Instance.new("UICorner",FOVFrame).CornerRadius = UDim.new(0.5,0)
+local FOVStr = Instance.new("UIStroke",FOVFrame)
+FOVStr.Color            = Color3.fromRGB(218,165,32)
+FOVStr.Thickness        = 1.5
+FOVStr.Transparency     = 0.3
+
+-- Radar
+local RadFrame = Instance.new("Frame",Root)
+RadFrame.Size           = UDim2.new(0,115,0,115)
+RadFrame.Position       = UDim2.new(1,-128,1,-128)
+RadFrame.BackgroundColor3 = Color3.fromRGB(4,4,4)
+RadFrame.BackgroundTransparency = 0.3
+RadFrame.BorderSizePixel = 0
+RadFrame.ZIndex         = 20
+RadFrame.Visible        = false
+Instance.new("UICorner",RadFrame).CornerRadius = UDim.new(0.5,0)
+local RadStr = Instance.new("UIStroke",RadFrame)
+RadStr.Color            = Color3.fromRGB(218,165,32)
+RadStr.Thickness        = 1.5
+
+-- Крест радара
+for _,cfg in ipairs({{UDim2.new(0.5,0,0,0),UDim2.new(0,1,1,0)},{UDim2.new(0,0,0.5,0),UDim2.new(1,0,0,1)}}) do
+    local l = Instance.new("Frame",RadFrame)
+    l.Position          = cfg[1]; l.Size=cfg[2]
+    l.BackgroundColor3  = Color3.fromRGB(218,165,32)
+    l.BackgroundTransparency = 0.6
+    l.BorderSizePixel   = 0
+    l.ZIndex            = 21
+end
+
+local SelfDot = Instance.new("Frame",RadFrame)
+SelfDot.Size            = UDim2.new(0,8,0,8)
+SelfDot.Position        = UDim2.new(0.5,-4,0.5,-4)
+SelfDot.BackgroundColor3 = Color3.fromRGB(30,210,80)
+SelfDot.BorderSizePixel = 0
+SelfDot.ZIndex          = 23
+Instance.new("UICorner",SelfDot).CornerRadius = UDim.new(0.5,0)
+
+-- ════════════════════════════════════════════
+--  RENDER LOOP
+-- ════════════════════════════════════════════
 RunService.RenderStepped:Connect(function()
-    local hrpSelf = getHRP()
+    if not isLoggedIn then return end
 
-    -- ── ESP ──────────────────────────────────────────
+    local selfHRP = getHRP()
+
+    -- ── ESP ──────────────────────────────────
+    local anyESP = CH.ESPBoxes or CH.ESPNames or CH.ESPHealth or CH.ESPTracer
+
     for _, p in ipairs(Players:GetPlayers()) do
-        if p == LocalPlayer then continue end
-
+        if p == LP then continue end
         local char = p.Character
         local hrp  = char and char:FindFirstChild("HumanoidRootPart")
         local hum  = char and char:FindFirstChildOfClass("Humanoid")
 
         if not (char and hrp and hum) then
-            -- Очищаем esp если персонажа нет
-            if espObjects[p.Name] then
-                for _, v in pairs(espObjects[p.Name]) do
-                    pcall(function() v:Destroy() end)
-                end
-                espObjects[p.Name] = nil
+            if espCache[p] then
+                for _, v in pairs(espCache[p]) do pcall(function() v:Destroy() end) end
+                espCache[p] = nil
             end
             continue
         end
 
-        local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+        local sp, vis = Camera:WorldToViewportPoint(hrp.Position)
 
-        if not onScreen then
-            if espObjects[p.Name] then
-                for _, v in pairs(espObjects[p.Name]) do
-                    v.Visible = false
-                end
+        if not anyESP then
+            if espCache[p] then
+                for _, v in pairs(espCache[p]) do v.Visible = false end
             end
             continue
         end
 
-        -- Создаём ESP объект если нет
-        if not espObjects[p.Name] then
-            espObjects[p.Name] = {}
-            local eg = espObjects[p.Name]
+        -- Инициализация ESP объектов
+        if not espCache[p] then
+            espCache[p] = {}
+            local e = espCache[p]
 
-            -- Рамка
-            local box = Instance.new("Frame", ScreenGui)
-            box.BackgroundTransparency = 1
-            box.BorderSizePixel        = 0
-            box.ZIndex                 = 19
-            local bStr = Instance.new("UIStroke", box)
-            bStr.Color     = C.GOLD
-            bStr.Thickness = 1.5
-            eg.box         = box
+            e.box = Instance.new("Frame",Root)
+            e.box.BackgroundTransparency = 1
+            e.box.BorderSizePixel = 0
+            e.box.ZIndex = 19
+            local bs = Instance.new("UIStroke",e.box)
+            bs.Color = Color3.fromRGB(218,165,32); bs.Thickness=1.5
 
-            -- Имя
-            local nameLbl2 = Instance.new("TextLabel", ScreenGui)
-            nameLbl2.BackgroundTransparency = 1
-            nameLbl2.TextColor3             = C.WHITE
-            nameLbl2.TextSize               = 12
-            nameLbl2.Font                   = Enum.Font.GothamBold
-            nameLbl2.TextStrokeColor3       = C.BLACK
-            nameLbl2.TextStrokeTransparency = 0
-            nameLbl2.ZIndex                 = 19
-            eg.nameLbl = nameLbl2
+            e.nameLbl = Instance.new("TextLabel",Root)
+            e.nameLbl.BackgroundTransparency = 1
+            e.nameLbl.TextColor3 = Color3.fromRGB(255,255,255)
+            e.nameLbl.TextSize   = 12
+            e.nameLbl.Font       = Enum.Font.GothamBold
+            e.nameLbl.TextStrokeColor3 = Color3.fromRGB(0,0,0)
+            e.nameLbl.TextStrokeTransparency = 0
+            e.nameLbl.ZIndex     = 19
 
-            -- HP Bar фрейм
-            local hpFrame = Instance.new("Frame", ScreenGui)
-            hpFrame.BackgroundColor3      = Color3.fromRGB(30, 30, 30)
-            hpFrame.BackgroundTransparency = 0.3
-            hpFrame.BorderSizePixel       = 0
-            hpFrame.ZIndex                = 19
-            eg.hpFrame = hpFrame
+            e.hpFrame = Instance.new("Frame",Root)
+            e.hpFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+            e.hpFrame.BackgroundTransparency = 0.3
+            e.hpFrame.BorderSizePixel = 0
+            e.hpFrame.ZIndex = 19
 
-            local hpFill = Instance.new("Frame", hpFrame)
-            hpFill.BackgroundColor3       = C.GREEN
-            hpFill.BackgroundTransparency = 0.1
-            hpFill.BorderSizePixel        = 0
-            hpFill.ZIndex                 = 20
-            eg.hpFill = hpFill
+            e.hpFill = Instance.new("Frame",e.hpFrame)
+            e.hpFill.BackgroundColor3 = Color3.fromRGB(30,210,80)
+            e.hpFill.BackgroundTransparency = 0.1
+            e.hpFill.BorderSizePixel = 0
+            e.hpFill.ZIndex = 20
+
+            e.tracer = Instance.new("Frame",Root)
+            e.tracer.BackgroundColor3 = Color3.fromRGB(218,165,32)
+            e.tracer.BackgroundTransparency = 0.3
+            e.tracer.BorderSizePixel = 0
+            e.tracer.AnchorPoint = Vector2.new(0.5,0)
+            e.tracer.ZIndex = 18
         end
 
-        local eg = espObjects[p.Name]
+        local e = espCache[p]
 
-        -- Рассчитываем размер рамки по высоте персонажа
-        local topPos3D     = hrp.Position + Vector3.new(0, 3.2, 0)
-        local botPos3D     = hrp.Position - Vector3.new(0, 3.2, 0)
-        local topScreen, _ = Camera:WorldToViewportPoint(topPos3D)
-        local botScreen, _ = Camera:WorldToViewportPoint(botPos3D)
-        local boxH         = math.abs(topScreen.Y - botScreen.Y)
-        local boxW         = boxH * 0.55
-        local bx           = screenPos.X - boxW / 2
-        local by           = topScreen.Y
+        if not vis then
+            for _, v in pairs(e) do v.Visible = false end
+            continue
+        end
+
+        -- Размеры рамки
+        local topSP = Camera:WorldToViewportPoint(hrp.Position + Vector3.new(0,3.5,0))
+        local botSP = Camera:WorldToViewportPoint(hrp.Position - Vector3.new(0,3,0))
+        local bH = math.abs(topSP.Y - botSP.Y)
+        local bW = bH * 0.52
+        local bx = sp.X - bW/2
+        local by = topSP.Y
 
         -- Рамка
-        local showBox = Cheats.ESPBoxes
-        eg.box.Visible   = showBox
-        if showBox then
-            eg.box.Size     = UDim2.new(0, boxW, 0, boxH)
-            eg.box.Position = UDim2.new(0, bx, 0, by)
+        e.box.Visible   = CH.ESPBoxes
+        if CH.ESPBoxes then
+            e.box.Size     = UDim2.new(0,bW,0,bH)
+            e.box.Position = UDim2.new(0,bx,0,by)
         end
 
         -- Имя
-        local showName = Cheats.EnemyNames
-        eg.nameLbl.Visible = showName
-        if showName then
-            eg.nameLbl.Text = p.Name
-            eg.nameLbl.Size = UDim2.new(0, boxW, 0, 16)
-            eg.nameLbl.Position = UDim2.new(0, bx, 0, by - 17)
+        e.nameLbl.Visible = CH.ESPNames
+        if CH.ESPNames then
+            e.nameLbl.Text = p.Name
+            e.nameLbl.Size = UDim2.new(0,bW+20,0,16)
+            e.nameLbl.Position = UDim2.new(0,bx-10,0,by-17)
         end
 
-        -- HP Bar
-        local showHP = Cheats.HealthBar
-        eg.hpFrame.Visible = showHP
-        eg.hpFill.Visible  = showHP
-        if showHP then
-            local hpRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-            eg.hpFrame.Size     = UDim2.new(0, 4, 0, boxH)
-            eg.hpFrame.Position = UDim2.new(0, bx - 7, 0, by)
-            eg.hpFill.Size      = UDim2.new(1, 0, hpRatio, 0)
-            eg.hpFill.Position  = UDim2.new(0, 0, 1 - hpRatio, 0)
-            eg.hpFill.BackgroundColor3 = Color3.fromRGB(
-                math.floor(255 * (1 - hpRatio)),
-                math.floor(200 * hpRatio),
-                40
-            )
+        -- HP
+        e.hpFrame.Visible = CH.ESPHealth
+        e.hpFill.Visible  = CH.ESPHealth
+        if CH.ESPHealth then
+            local ratio = math.clamp(hum.Health/math.max(hum.MaxHealth,1),0,1)
+            e.hpFrame.Size     = UDim2.new(0,4,0,bH)
+            e.hpFrame.Position = UDim2.new(0,bx-7,0,by)
+            e.hpFill.Size      = UDim2.new(1,0,ratio,0)
+            e.hpFill.Position  = UDim2.new(0,0,1-ratio,0)
+            e.hpFill.BackgroundColor3 = Color3.fromRGB(math.floor(220*(1-ratio)),math.floor(200*ratio),40)
+        end
+
+        -- Трейсер
+        e.tracer.Visible = CH.ESPTracer
+        if CH.ESPTracer then
+            local cx2 = Camera.ViewportSize.X/2
+            local cy2 = Camera.ViewportSize.Y
+            local dx = sp.X - cx2
+            local dy = sp.Y - cy2
+            local len = math.sqrt(dx*dx + dy*dy)
+            local angle = math.atan2(dy,dx)
+            e.tracer.Size     = UDim2.new(0,1,0,len)
+            e.tracer.Position = UDim2.new(0,cx2,0,cy2)
+            e.tracer.Rotation = math.deg(angle) + 90
         end
     end
 
-    -- ── AIMBOT ───────────────────────────────────────
-    if Cheats.Aimbot or Cheats.AutoAim then
-        local target = getClosestEnemy()
+    -- ── AIMBOT ───────────────────────────────
+    if CH.Aimbot or CH.AutoAim then
+        local target = getNearestEnemy()
         if target then
-            local targetHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-            if targetHRP then
-                local lookAt = CFrame.lookAt(Camera.CFrame.Position, targetHRP.Position)
-                if Cheats.Aimbot then
-                    -- Жёсткий aimbot
-                    Camera.CFrame = CFrame.new(Camera.CFrame.Position) * (lookAt - lookAt.Position)
-                elseif Cheats.AutoAim then
-                    -- Плавный auto aim
-                    Camera.CFrame = Camera.CFrame:Lerp(lookAt, 0.08)
+            local tHRP = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            if tHRP then
+                local lookCF = CFrame.lookAt(Camera.CFrame.Position, tHRP.Position)
+                if CH.Aimbot then
+                    Camera.CFrame = lookCF
+                elseif CH.AutoAim then
+                    Camera.CFrame = Camera.CFrame:Lerp(lookCF, 0.07)
                 end
             end
         end
     end
 
-    -- ── FOV CIRCLE ───────────────────────────────────
-    FOVCircle.Visible = Cheats.AimFOV and isLoggedIn
-    if Cheats.AimFOV then
-        updateFOVCircle()
+    -- ── FOV CIRCLE ───────────────────────────
+    FOVFrame.Visible = CH.FOVCircle
+    if CH.FOVCircle then
+        local r = CH.FOVRadius
+        local cx3 = Camera.ViewportSize.X/2
+        local cy3 = Camera.ViewportSize.Y/2
+        FOVFrame.Size     = UDim2.new(0,r*2,0,r*2)
+        FOVFrame.Position = UDim2.new(0,cx3-r,0,cy3-r)
     end
 
-    -- ── RADAR ────────────────────────────────────────
-    RadarFrame.Visible = Cheats.Radar and isLoggedIn
-    if Cheats.Radar and hrpSelf then
-        -- Чистим старые точки
-        for _, dot in pairs(radarDots) do
-            dot:Destroy()
-        end
+    -- ── RADAR ────────────────────────────────
+    RadFrame.Visible = CH.Radar
+    if CH.Radar and selfHRP then
+        for _,d in pairs(radarDots) do d:Destroy() end
         radarDots = {}
-
-        local RANGE = 150
-        local SIZE  = RadarFrame.AbsoluteSize.X / 2
-
+        local RANGE = 160
+        local half  = 57
         for _, p in ipairs(getEnemies()) do
             local hrp2 = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
             if hrp2 then
-                local diff = hrp2.Position - hrpSelf.Position
-                local camLook = Camera.CFrame.LookVector
-                local right   = Camera.CFrame.RightVector
-                local rx      = diff:Dot(right)
-                local ry      = diff:Dot(camLook)
-                local rel     = Vector2.new(rx, ry)
-                if rel.Magnitude < RANGE then
-                    local norm = rel / RANGE
-                    local dot2 = Instance.new("Frame", RadarFrame)
-                    dot2.Size                = UDim2.new(0, 7, 0, 7)
-                    dot2.AnchorPoint         = Vector2.new(0.5, 0.5)
-                    dot2.Position            = UDim2.new(0.5 + norm.X*0.45, 0, 0.5 - norm.Y*0.45, 0)
-                    dot2.BackgroundColor3    = C.RED
-                    dot2.BackgroundTransparency = 0.1
-                    dot2.BorderSizePixel     = 0
-                    dot2.ZIndex              = 22
-                    Instance.new("UICorner", dot2).CornerRadius = UDim.new(0.5, 0)
-                    table.insert(radarDots, dot2)
+                local diff  = hrp2.Position - selfHRP.Position
+                local rx    = diff:Dot(Camera.CFrame.RightVector)
+                local ry    = diff:Dot(Camera.CFrame.LookVector)
+                if Vector2.new(rx,ry).Magnitude < RANGE then
+                    local nx = rx/RANGE
+                    local ny = ry/RANGE
+                    local dot = Instance.new("Frame",RadFrame)
+                    dot.Size  = UDim2.new(0,7,0,7)
+                    dot.AnchorPoint = Vector2.new(0.5,0.5)
+                    dot.Position    = UDim2.new(0,half + nx*half*0.9,0,half - ny*half*0.9)
+                    dot.BackgroundColor3 = Color3.fromRGB(220,40,40)
+                    dot.BackgroundTransparency = 0.05
+                    dot.BorderSizePixel = 0
+                    dot.ZIndex          = 22
+                    Instance.new("UICorner",dot).CornerRadius = UDim.new(0.5,0)
+                    table.insert(radarDots,dot)
                 end
             end
         end
     end
 
-    -- ── NO CLIP ──────────────────────────────────────
-    if Cheats.NoClip then
+    -- ── NO CLIP ──────────────────────────────
+    if CH.NoClip then
         local char = getChar()
         if char then
-            for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
+            for _, p2 in ipairs(char:GetDescendants()) do
+                if p2:IsA("BasePart") then p2.CanCollide = false end
             end
         end
     end
 
-    -- ── FLY ──────────────────────────────────────────
-    if Cheats.FlyMode and flyBodyForce then
-        local moveDir = Vector3.zero
-        local SPEED   = 60
-        local camCF   = Camera.CFrame
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-            moveDir += camCF.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-            moveDir -= camCF.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-            moveDir -= camCF.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-            moveDir += camCF.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            moveDir += Vector3.new(0, 1, 0)
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-            moveDir -= Vector3.new(0, 1, 0)
-        end
-        flyBodyForce.Velocity = moveDir.Magnitude > 0 and (moveDir.Unit * SPEED) or Vector3.zero
-        flyBodyGyro.CFrame    = camCF
+    -- ── FLY ──────────────────────────────────
+    if CH.Fly and flyVel then
+        local dir = Vector3.zero
+        local SPD = 70
+        local cf  = Camera.CFrame
+        if UserInputService:IsKeyDown(Enum.KeyCode.W)         then dir += cf.LookVector  end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S)         then dir -= cf.LookVector  end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A)         then dir -= cf.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D)         then dir += cf.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space)     then dir += Vector3.yAxis  end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= Vector3.yAxis  end
+        flyVel.Velocity = dir.Magnitude > 0 and (dir.Unit * SPD) or Vector3.zero
+        if flyGyro then flyGyro.CFrame = cf end
     end
 end)
 
--- ── INFINITE JUMP ────────────────────────────────────
+-- ── INFINITE JUMP ────────────────────────────
 UserInputService.JumpRequest:Connect(function()
-    if Cheats.InfiniteJump then
+    if CH.InfJump then
         local hum = getHum()
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- ── ANTI-AFK ─────────────────────────────────────────
+-- ── ANTI-AFK ─────────────────────────────────
 task.spawn(function()
-    while task.wait(60) do
-        if Cheats.AntiAFK then
-            local VU = game:GetService("VirtualUser")
-            VU:Button2Down(Vector2.new(0, 0), CFrame.new())
-            task.wait(0.1)
-            VU:Button2Up(Vector2.new(0, 0), CFrame.new())
+    while true do
+        task.wait(55)
+        if CH.AntiAFK then
+            pcall(function()
+                local VU = game:GetService("VirtualUser")
+                VU:Button2Down(Vector2.new(0,0), CFrame.new())
+                task.wait(0.1)
+                VU:Button2Up(Vector2.new(0,0), CFrame.new())
+            end)
         end
     end
 end)
 
--- ── SPEED HACK (на спавне нового персонажа) ──────────
-LocalPlayer.CharacterAdded:Connect(function(char)
-    if Cheats.SpeedHack then
-        local hum = char:WaitForChild("Humanoid")
-        hum.WalkSpeed = Cheats.SpeedValue
+-- ── RESPAWN FIX ──────────────────────────────
+LP.CharacterAdded:Connect(function(char)
+    flyVel  = nil
+    flyGyro = nil
+    if CH.SpeedHack then
+        local hum = char:WaitForChild("Humanoid", 5)
+        if hum then hum.WalkSpeed = CH.WalkSpeed end
     end
-    -- Сбрасываем fly при respawn
-    flyBodyForce = nil
-    flyBodyGyro  = nil
 end)
 
--- ── FPS СЧЁТЧИК ──────────────────────────────────────
-local frameCount2 = 0
-local lastT2      = tick()
+-- ════════════════════════════════════════════
+--  FPS СЧЁТЧИК
+-- ════════════════════════════════════════════
+local fCount, fLast = 0, tick()
 RunService.RenderStepped:Connect(function()
-    frameCount2 += 1
-    if tick() - lastT2 >= 0.5 then
-        local fps = math.floor(frameCount2 / (tick() - lastT2))
-        FPSLbl.Text = "FPS: " .. fps
-        FPSLbl.TextColor3 = fps >= 55 and C.GREEN or (fps >= 30 and C.GOLD or C.RED)
-        frameCount2 = 0
-        lastT2 = tick()
+    fCount += 1
+    if tick() - fLast >= 0.5 then
+        local fps = math.floor(fCount / (tick() - fLast))
+        FPSLbl.Text      = "FPS: " .. fps
+        FPSLbl.TextColor3 = fps>=55 and Color3.fromRGB(30,210,80)
+                         or fps>=30 and Color3.fromRGB(218,165,32)
+                         or            Color3.fromRGB(220,40,40)
+        fCount = 0
+        fLast  = tick()
     end
 end)
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  ПЕРЕТАСКИВАНИЕ ОКНА
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 TBar.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
         isDragging = true
-        dragStart  = inp.Position
-        startPos   = Win.Position
+        dragOffset = Vector2.new(
+            inp.Position.X - Win.AbsolutePosition.X,
+            inp.Position.Y - Win.AbsolutePosition.Y
+        )
     end
 end)
 UserInputService.InputChanged:Connect(function(inp)
-    if isDragging and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-        local d = inp.Position - dragStart
-        Win.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    if isDragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+        Win.Position = UDim2.new(0, inp.Position.X - dragOffset.X, 0, inp.Position.Y - dragOffset.Y)
     end
 end)
 UserInputService.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-        isDragging = false
-    end
+    if inp.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end
 end)
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  СВЕРНУТЬ / РАЗВЕРНУТЬ
--- ══════════════════════════════════════════════════════
-ArrowBtn.MouseButton1Click:Connect(function()
+-- ════════════════════════════════════════════
+BtnArrow.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
-    ArrowBtn.Text = isMinimized and "▶" or "▼"
-    local targetH = isMinimized and 34 or WIN_H
-    TweenService:Create(Win, TweenInfo.new(0.26, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, WIN_W, 0, targetH)
-    }):Play()
+    BtnArrow.Text = isMinimized and "▶" or "▼"
+    tween(Win, {Size = UDim2.new(0,W,0, isMinimized and 34 or H)}, 0.25)
 end)
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  ЗАКРЫТЬ
--- ══════════════════════════════════════════════════════
-XBtn.MouseButton1Click:Connect(function()
-    TweenService:Create(Win, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-        Size     = UDim2.new(0, 0, 0, 0),
-        Position = Win.Position + UDim2.new(0, WIN_W/2, 0, WIN_H/2),
-    }):Play()
-    task.delay(0.25, function() Win.Visible = false end)
+-- ════════════════════════════════════════════
+BtnX.MouseButton1Click:Connect(function()
+    local cx4 = Win.AbsolutePosition.X + W/2
+    local cy4 = Win.AbsolutePosition.Y + H/2
+    tween(Win, {Size=UDim2.new(0,0,0,0), Position=UDim2.new(0,cx4,0,cy4)}, 0.2)
+    task.delay(0.22, function() Win.Visible = false end)
 end)
 
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════
 --  ЛОГИКА ВХОДА
--- ══════════════════════════════════════════════════════
-local function checkKey(raw)
-    local k = (raw or ""):match("^%s*(.-)%s*$")
-    for _, v in ipairs(validKeys) do
-        if v == k then return true end
-    end
-    return false
-end
-
+-- ════════════════════════════════════════════
 local function shakeWin()
     local orig = Win.Position
-    for i = 1, 7 do
-        TweenService:Create(Win, TweenInfo.new(0.035), {
-            Position = orig + UDim2.new(0, i%2==0 and 7 or -7, 0, 0)
-        }):Play()
-        task.wait(0.04)
+    for i = 1, 8 do
+        Win.Position = orig + UDim2.new(0, i%2==0 and 8 or -8, 0, 0)
+        task.wait(0.035)
     end
     Win.Position = orig
 end
 
 local function doLogin()
-    if checkKey(KeyBox.Text) then
+    local key = KeyBox.Text:match("^%s*(.-)%s*$")
+    if isValidKey(key) then
         isLoggedIn = true
+        StatusLbl.TextColor3 = Color3.fromRGB(30,210,80)
+        StatusLbl.Text       = "✔  Добро пожаловать, " .. LP.Name .. "!"
 
-        -- Анимация успеха
-        StatusLbl.TextColor3 = C.GREEN
-        StatusLbl.Text       = "✔  Доступ открыт! Добро пожаловать, " .. LocalPlayer.Name
+        -- Убираем фон
+        tween(EBG,     {BackgroundTransparency=1}, 0.7)
+        tween(ErrText, {TextTransparency=1},        0.5)
+        tween(BigErr,  {TextTransparency=1},        0.4)
+        task.delay(0.75, function() EBG.Visible = false end)
 
-        TweenService:Create(ErrorBG, TweenInfo.new(0.7), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(errTextLbl, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-        TweenService:Create(bigErrLbl,  TweenInfo.new(0.4), {TextTransparency = 1}):Play()
-        task.delay(0.72, function() ErrorBG.Visible = false end)
-
+        -- Показываем чит меню
         task.delay(0.85, function()
-            LoginF.Visible    = false
-            CheatMenu.Visible = true
-            switchTab("AIMBOT")
+            LoginF.Visible  = false
+            CheatF.Visible  = true
+            -- Активируем первый таб
+            tabs["AIMBOT"].btn:FindFirstChildOfClass and nil
+            tabs["AIMBOT"].btn.MouseButton1Click:Fire()
         end)
     else
-        StatusLbl.TextColor3 = C.RED
+        StatusLbl.TextColor3 = Color3.fromRGB(220,40,40)
         StatusLbl.Text       = "✖  Key not registered or expired"
-        shakeWin()
+        task.spawn(shakeWin)
     end
 end
 
-EnterBtn.MouseButton1Click:Connect(doLogin)
+BtnEnter.MouseButton1Click:Connect(doLogin)
+KeyBox.FocusLost:Connect(function(enter) if enter then doLogin() end end)
 
-KeyBox.FocusLost:Connect(function(enter)
-    if enter then doLogin() end
-end)
-
-PasteBtn.MouseButton1Click:Connect(function()
-    local ok, clip = pcall(function() return getclipboard() end)
-    if ok and clip and clip ~= "" then
-        KeyBox.Text          = clip
-        StatusLbl.TextColor3 = C.GOLD
-        StatusLbl.Text       = "📋  Ключ вставлен из буфера"
+BtnPaste.MouseButton1Click:Connect(function()
+    local ok, clip = pcall(getclipboard)
+    if ok and clip and #clip > 0 then
+        KeyBox.Text = clip
+        StatusLbl.TextColor3 = Color3.fromRGB(218,165,32)
+        StatusLbl.Text = "📋  Ключ вставлен — нажми ENTER LOGIN"
     else
-        StatusLbl.TextColor3 = Color3.fromRGB(180, 180, 50)
-        StatusLbl.Text       = "⚠  getclipboard() недоступен — введи ключ вручную"
+        StatusLbl.TextColor3 = Color3.fromRGB(180,180,50)
+        StatusLbl.Text = "⚠  Буфер недоступен — введи ключ вручную"
     end
 end)
 
--- Ховер на кнопках
-for _, b in ipairs({EnterBtn, PasteBtn}) do
-    b.MouseEnter:Connect(function()
-        TweenService:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 0.1}):Play()
-    end)
-    b.MouseLeave:Connect(function()
-        TweenService:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 0.3}):Play()
-    end)
+-- Ховер на кнопках входа
+for _, b in ipairs({BtnEnter, BtnPaste}) do
+    b.MouseEnter:Connect(function()  tween(b,{BackgroundTransparency=0.05}) end)
+    b.MouseLeave:Connect(function()  tween(b,{BackgroundTransparency=0.22}) end)
 end
 
--- ══════════════════════════════════════════════════════
---  РЕГИСТРАЦИЯ (создание key.txt)
--- ══════════════════════════════════════════════════════
--- Если key.txt не существует — создаём шаблон
-if not keyFileLoaded then
+-- ════════════════════════════════════════════
+--  СОЗДАТЬ key.txt если нет
+-- ════════════════════════════════════════════
+task.spawn(function()
     pcall(function()
         if not isfile("key.txt") then
-            writefile("key.txt", "ANGER-2025-ALPHA\nANGER-VIP-001\nANGER-KEY-XYZ\nTESTKEY123\nRAGE-MOD-KEY\n")
-            -- Перечитываем
-            local content = readfile("key.txt")
-            validKeys = {}
-            for line in content:gmatch("[^\r\n]+") do
-                local t = line:match("^%s*(.-)%s*$")
-                if t ~= "" then table.insert(validKeys, t) end
-            end
-            StatusLbl.Text = "✔  key.txt создан автоматически"
-            StatusLbl.TextColor3 = C.GREEN
+            writefile("key.txt",
+                "ANGER-2025-ALPHA\n"..
+                "ANGER-VIP-001\n"..
+                "ANGER-KEY-XYZ\n"..
+                "TESTKEY123\n"..
+                "RAGE-MOD-KEY\n"
+            )
+            -- После создания — перечитываем
+            reloadKeys()
         end
     end)
+end)
+
+-- ════════════════════════════════════════════
+--  АКТИВИРУЕМ ПЕРВЫЙ ТАБ ПОСЛЕ ЛОГИНА
+-- ════════════════════════════════════════════
+-- (вызывается через MouseButton1Click:Fire() выше)
+-- Дополнительно вешаем прямой вызов
+local function openFirstTab()
+    activeTab = "AIMBOT"
+    for tname, tdata in pairs(tabs) do
+        tdata.btn.TextColor3 = Color3.fromRGB(100,100,100)
+        tdata.btn.BackgroundColor3 = Color3.fromRGB(12,12,12)
+        tdata.btn.BackgroundTransparency = 0.3
+        local s = tdata.btn:FindFirstChildOfClass("UIStroke")
+        if s then s:Destroy() end
+        for _, w in ipairs(tdata.widgets) do w.Parent = nil end
+    end
+    local btn = tabs["AIMBOT"].btn
+    btn.TextColor3 = Color3.fromRGB(218,165,32)
+    btn.BackgroundColor3 = Color3.fromRGB(22,17,3)
+    btn.BackgroundTransparency = 0.1
+    local ns = Instance.new("UIStroke",btn)
+    ns.Color=Color3.fromRGB(218,165,32); ns.Thickness=1; ns.Transparency=0.35
+    for _, w in ipairs(tabs["AIMBOT"].widgets) do w.Parent = Scroll end
 end
 
-print("[AngerMOD V-2] ✔ Загружен. Ключей загружено: " .. #validKeys)
-print("[AngerMOD V-2] Доступные ключи (для теста): " .. table.concat(validKeys, ", "))
+-- Патчим doLogin чтобы вызывал openFirstTab напрямую
+local _origLogin = doLogin
+doLogin = function()
+    local key = KeyBox.Text:match("^%s*(.-)%s*$")
+    if isValidKey(key) then
+        isLoggedIn = true
+        StatusLbl.TextColor3 = Color3.fromRGB(30,210,80)
+        StatusLbl.Text       = "✔  Добро пожаловать, " .. LP.Name .. "!"
+        tween(EBG,     {BackgroundTransparency=1}, 0.7)
+        tween(ErrText, {TextTransparency=1},        0.5)
+        tween(BigErr,  {TextTransparency=1},        0.4)
+        task.delay(0.75, function() EBG.Visible = false end)
+        task.delay(0.85, function()
+            LoginF.Visible  = false
+            CheatF.Visible  = true
+            openFirstTab()
+        end)
+    else
+        StatusLbl.TextColor3 = Color3.fromRGB(220,40,40)
+        StatusLbl.Text       = "✖  Key not registered or expired"
+        task.spawn(shakeWin)
+    end
+end
+
+BtnEnter.MouseButton1Click:Connect(doLogin)
+KeyBox.FocusLost:Connect(function(enter) if enter then doLogin() end end)
+
+print("[AngerMOD V-2] ✔ Загружен успешно!")
+print("[AngerMOD V-2] Ключей в системе: " .. #KEYS)
+print("[AngerMOD V-2] Статус key.txt: " .. keyFileStatus)
